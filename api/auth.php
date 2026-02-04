@@ -10,19 +10,33 @@ if ($method === 'POST') {
     $acao = $data['acao'] ?? '';
     
     if ($acao === 'login') {
-        $nome = $data['nome'] ?? '';
         $senha = $data['senha'] ?? '';
         
-        if (empty($nome) || empty($senha)) {
-            jsonResponse(['erro' => 'Nome e senha são obrigatórios'], 400);
+        if (empty($senha)) {
+            jsonResponse(['erro' => 'Senha é obrigatória'], 400);
         }
         
         $pdo = getDB();
-        $stmt = $pdo->prepare("SELECT id, nome, senha, saldo, tema FROM usuarios WHERE nome = ? AND ativo = 1");
-        $stmt->execute([$nome]);
+        // Buscar usuário apenas pela senha (senha numérica como identificador único)
+        $stmt = $pdo->prepare("SELECT id, nome, senha, saldo, tema FROM usuarios WHERE senha = ? AND ativo = 1");
+        $stmt->execute([$senha]);
         $usuario = $stmt->fetch();
         
-        if ($usuario && password_verify($senha, $usuario['senha'])) {
+        // Se não encontrou com senha direta, tentar verificar hash
+        if (!$usuario) {
+            $stmt = $pdo->prepare("SELECT id, nome, senha, saldo, tema FROM usuarios WHERE ativo = 1");
+            $stmt->execute();
+            $todos_usuarios = $stmt->fetchAll();
+            
+            foreach ($todos_usuarios as $u) {
+                if (password_verify($senha, $u['senha']) || $senha === $u['senha']) {
+                    $usuario = $u;
+                    break;
+                }
+            }
+        }
+        
+        if ($usuario) {
             session_start();
             $_SESSION['usuario_id'] = $usuario['id'];
             $_SESSION['usuario_nome'] = $usuario['nome'];
@@ -43,7 +57,7 @@ if ($method === 'POST') {
                 ]
             ]);
         } else {
-            jsonResponse(['erro' => 'Nome ou senha incorretos'], 401);
+            jsonResponse(['erro' => 'Senha incorreta'], 401);
         }
     }
     

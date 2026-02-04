@@ -23,7 +23,7 @@ body {
 }
 
 .phone-screen {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    background: #000;
     border-radius: 25px;
     min-height: 100vh;
     max-height: 100vh;
@@ -33,39 +33,53 @@ body {
 
 /* Tema Claro */
 body.tema-claro .phone-screen {
-    background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
-    color: #333;
+    background: #fff;
+    color: #000;
 }
 
 body.tema-claro .status-bar {
-    background: rgba(255,255,255,0.9);
-    color: #333;
+    background: transparent;
+    color: #000;
 }
 
 body.tema-claro .app-header {
-    background: rgba(255,255,255,0.95);
-    color: #333;
+    background: #fff;
+    color: #000;
+    border-bottom: 1px solid #ddd;
 }
 
 body.tema-claro .menu-lateral {
-    background: rgba(255,255,255,0.98);
-    color: #333;
+    background: #fff;
+    color: #000;
+    border-right: 1px solid #ddd;
 }
 
 body.tema-claro .widget {
-    background: rgba(255,255,255,0.9);
-    color: #333;
+    background: #f5f5f5;
+    border-left: 3px solid #dc143c;
+    border-color: #ddd;
+}
+
+body.tema-claro .input-field {
+    border-bottom-color: #000;
+    color: #000;
+}
+
+body.tema-claro .input-field:focus {
+    border-bottom-color: #dc143c;
 }
 
 /* Status Bar */
 .status-bar {
     display: flex;
     justify-content: space-between;
-    padding: 8px 20px;
-    font-size: 12px;
-    background: rgba(0,0,0,0.3);
+    padding: 12px 20px;
+    font-size: 11px;
+    background: transparent;
     color: #fff;
-    font-weight: 600;
+    font-weight: 300;
+    letter-spacing: 0.5px;
+    margin-top: auto;
 }
 
 /* Tela de Login */
@@ -80,68 +94,64 @@ body.tema-claro .widget {
 .login-container {
     text-align: center;
     padding: 40px 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 100vh;
 }
 
-.logo h1 {
-    font-size: 42px;
-    font-weight: 900;
-    background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 10px;
-    text-shadow: 0 0 20px rgba(255,107,107,0.5);
+.login-message {
+    margin-top: 100px;
+    margin-bottom: 60px;
 }
 
-.logo p {
-    color: #aaa;
-    font-size: 14px;
-    margin-bottom: 40px;
+.login-message p {
+    color: #fff;
+    font-size: 16px;
+    font-weight: 300;
+    letter-spacing: 0.5px;
 }
 
 .login-form {
-    margin-top: 50px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .input-field {
     width: 100%;
-    padding: 15px;
-    margin-bottom: 15px;
-    background: rgba(255,255,255,0.1);
-    border: 2px solid rgba(255,255,255,0.2);
-    border-radius: 12px;
+    max-width: 300px;
+    padding: 20px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid #fff;
     color: #fff;
-    font-size: 16px;
-    backdrop-filter: blur(10px);
+    font-size: 32px;
+    text-align: center;
+    letter-spacing: 8px;
+    font-weight: 300;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.input-field:focus {
+    border-bottom-color: #dc143c;
 }
 
 .input-field::placeholder {
-    color: rgba(255,255,255,0.5);
-}
-
-.btn-unlock {
-    width: 100%;
-    padding: 15px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
-    border-radius: 12px;
-    color: #fff;
-    font-size: 18px;
-    font-weight: 700;
-    cursor: pointer;
-    margin-top: 10px;
-    box-shadow: 0 4px 15px rgba(102,126,234,0.4);
-    transition: transform 0.2s;
-}
-
-.btn-unlock:active {
-    transform: scale(0.98);
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 2px;
+    font-size: 16px;
 }
 
 .erro-mensagem {
-    color: #ff6b6b;
-    margin-top: 15px;
+    color: #dc143c;
+    margin-top: 20px;
     font-size: 14px;
     min-height: 20px;
+    font-weight: 300;
 }
 
 /* App Header */
@@ -150,16 +160,15 @@ body.tema-claro .widget {
     justify-content: space-between;
     align-items: center;
     padding: 15px 20px;
-    background: rgba(0,0,0,0.3);
-    backdrop-filter: blur(10px);
+    background: #000;
+    border-bottom: 1px solid #333;
 }
 
 .app-header h1 {
-    font-size: 24px;
-    font-weight: 700;
-    background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    font-size: 20px;
+    font-weight: 400;
+    color: #fff;
+    letter-spacing: 2px;
 }
 
 .btn-menu {
@@ -178,11 +187,11 @@ body.tema-claro .widget {
     left: -100%;
     width: 280px;
     height: 100vh;
-    background: rgba(26,26,46,0.98);
-    backdrop-filter: blur(20px);
+    background: #000;
     z-index: 1000;
     transition: left 0.3s ease;
     overflow-y: auto;
+    border-right: 1px solid #333;
 }
 
 .menu-lateral.aberto {
@@ -225,8 +234,8 @@ body.tema-claro .widget {
 }
 
 .menu-item:hover, .menu-item.active {
-    background: rgba(255,255,255,0.1);
-    border-left-color: #4ecdc4;
+    background: rgba(255,255,255,0.05);
+    border-left-color: #dc143c;
 }
 
 .menu-icon {
@@ -264,46 +273,51 @@ body.tema-claro .widget {
 }
 
 .widget {
-    background: rgba(255,255,255,0.1);
-    backdrop-filter: blur(10px);
-    border-radius: 15px;
+    background: #111;
+    border-radius: 0;
     padding: 20px;
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid #333;
+    border-left: 3px solid #dc143c;
 }
 
 .widget h3 {
-    font-size: 14px;
-    color: rgba(255,255,255,0.7);
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
     margin-bottom: 10px;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
+    font-weight: 300;
 }
 
 .valor-grande {
     font-size: 32px;
-    font-weight: 700;
-    color: #4ecdc4;
+    font-weight: 300;
+    color: #fff;
+    letter-spacing: 1px;
 }
 
 /* Banco */
 .banco-saldo {
     text-align: center;
     padding: 30px 20px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 15px;
+    background: #111;
+    border: 1px solid #333;
     margin-bottom: 20px;
 }
 
 .banco-saldo p {
-    color: rgba(255,255,255,0.7);
-    font-size: 14px;
+    color: rgba(255,255,255,0.5);
+    font-size: 12px;
     margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .banco-saldo h2 {
     font-size: 48px;
-    font-weight: 700;
-    color: #4ecdc4;
+    font-weight: 300;
+    color: #fff;
+    letter-spacing: 2px;
 }
 
 .banco-opcoes {
@@ -315,19 +329,20 @@ body.tema-claro .widget {
 
 .btn-opcao {
     padding: 15px;
-    background: rgba(255,255,255,0.1);
-    border: 2px solid rgba(255,255,255,0.2);
-    border-radius: 12px;
+    background: #111;
+    border: 1px solid #333;
     color: #fff;
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 14px;
+    font-weight: 300;
     cursor: pointer;
     transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .btn-opcao:active {
-    transform: scale(0.98);
-    background: rgba(255,255,255,0.2);
+    background: #dc143c;
+    border-color: #dc143c;
 }
 
 .transacoes-lista {
@@ -337,12 +352,13 @@ body.tema-claro .widget {
 }
 
 .transacao-item {
-    background: rgba(255,255,255,0.1);
-    border-radius: 12px;
+    background: #111;
+    border: 1px solid #333;
     padding: 15px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 1px;
 }
 
 .transacao-info h4 {
@@ -361,11 +377,11 @@ body.tema-claro .widget {
 }
 
 .transacao-valor.entrada {
-    color: #4ecdc4;
+    color: #fff;
 }
 
 .transacao-valor.saida {
-    color: #ff6b6b;
+    color: #dc143c;
 }
 
 /* Contatos */
@@ -377,21 +393,30 @@ body.tema-claro .widget {
 }
 
 .tela-header h2 {
-    font-size: 24px;
+    font-size: 20px;
+    font-weight: 300;
+    letter-spacing: 1px;
+    color: #fff;
 }
 
 .btn-add {
     width: 40px;
     height: 40px;
-    border-radius: 50%;
-    background: #4ecdc4;
-    border: none;
+    border-radius: 0;
+    background: transparent;
+    border: 1px solid #fff;
     color: #fff;
     font-size: 24px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-add:active {
+    background: #dc143c;
+    border-color: #dc143c;
 }
 
 .filtros {
@@ -401,11 +426,11 @@ body.tema-claro .widget {
 .select-filtro {
     width: 100%;
     padding: 12px;
-    background: rgba(255,255,255,0.1);
-    border: 2px solid rgba(255,255,255,0.2);
-    border-radius: 12px;
+    background: #111;
+    border: 1px solid #333;
     color: #fff;
     font-size: 14px;
+    font-weight: 300;
 }
 
 .contatos-lista {
@@ -415,30 +440,34 @@ body.tema-claro .widget {
 }
 
 .contato-item {
-    background: rgba(255,255,255,0.1);
-    border-radius: 12px;
+    background: #111;
+    border: 1px solid #333;
     padding: 15px;
     display: flex;
     align-items: center;
     gap: 15px;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.2s;
+    margin-bottom: 1px;
 }
 
 .contato-item:active {
-    background: rgba(255,255,255,0.2);
+    background: #1a1a1a;
+    border-left: 3px solid #dc143c;
 }
 
 .contato-avatar {
     width: 50px;
     height: 50px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 0;
+    background: #dc143c;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 20px;
     color: #fff;
+    font-weight: 300;
+    border: 1px solid #333;
 }
 
 .contato-info {
@@ -470,34 +499,37 @@ body.tema-claro .widget {
 }
 
 .conversa-item {
-    background: rgba(255,255,255,0.1);
-    border-radius: 12px;
+    background: #111;
+    border: 1px solid #333;
     padding: 15px;
     display: flex;
     align-items: center;
     gap: 15px;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.2s;
+    margin-bottom: 1px;
 }
 
 .conversa-item:active {
-    background: rgba(255,255,255,0.2);
+    background: #1a1a1a;
 }
 
 .conversa-item.nao-lidas {
-    border-left: 3px solid #4ecdc4;
+    border-left: 3px solid #dc143c;
 }
 
 .conversa-avatar {
     width: 50px;
     height: 50px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 0;
+    background: #dc143c;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 20px;
     color: #fff;
+    font-weight: 300;
+    border: 1px solid #333;
 }
 
 .conversa-info {
@@ -518,16 +550,17 @@ body.tema-claro .widget {
 }
 
 .conversa-badge {
-    background: #4ecdc4;
-    color: #000;
-    border-radius: 50%;
+    background: #dc143c;
+    color: #fff;
+    border-radius: 0;
     width: 24px;
     height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
-    font-weight: 700;
+    font-size: 11px;
+    font-weight: 300;
+    border: 1px solid #333;
 }
 
 /* Tela de Conversa */
@@ -551,8 +584,8 @@ body.tema-claro .widget {
     display: flex;
     align-items: center;
     padding: 15px 20px;
-    background: rgba(0,0,0,0.3);
-    backdrop-filter: blur(10px);
+    background: #000;
+    border-bottom: 1px solid #333;
     gap: 15px;
 }
 
@@ -587,15 +620,15 @@ body.tema-claro .widget {
 }
 
 .mensagem.npc {
-    background: rgba(255,255,255,0.2);
+    background: #111;
+    border: 1px solid #333;
     align-self: flex-start;
-    border-bottom-left-radius: 4px;
 }
 
 .mensagem.jogador {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #dc143c;
+    border: 1px solid #dc143c;
     align-self: flex-end;
-    border-bottom-right-radius: 4px;
 }
 
 .mensagem-hora {
@@ -606,7 +639,8 @@ body.tema-claro .widget {
 
 .chat-input-area {
     padding: 15px;
-    background: rgba(0,0,0,0.3);
+    background: #000;
+    border-top: 1px solid #333;
     display: flex;
     gap: 10px;
 }
@@ -614,11 +648,11 @@ body.tema-claro .widget {
 .chat-input {
     flex: 1;
     padding: 12px;
-    background: rgba(255,255,255,0.1);
-    border: 2px solid rgba(255,255,255,0.2);
-    border-radius: 25px;
+    background: #111;
+    border: 1px solid #333;
     color: #fff;
     font-size: 14px;
+    font-weight: 300;
 }
 
 .chat-input::placeholder {
@@ -628,12 +662,17 @@ body.tema-claro .widget {
 .btn-enviar {
     width: 45px;
     height: 45px;
-    border-radius: 50%;
-    background: #4ecdc4;
-    border: none;
+    border-radius: 0;
+    background: #dc143c;
+    border: 1px solid #dc143c;
     color: #fff;
     font-size: 20px;
     cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-enviar:active {
+    background: #b0122a;
 }
 
 /* Inventário */
@@ -657,12 +696,13 @@ body.tema-claro .widget {
 }
 
 .item-inventario {
-    background: rgba(255,255,255,0.1);
-    border-radius: 12px;
+    background: #111;
+    border: 1px solid #333;
     padding: 15px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 1px;
 }
 
 .item-info h4 {
@@ -677,8 +717,8 @@ body.tema-claro .widget {
 
 .item-quantidade {
     font-size: 20px;
-    font-weight: 700;
-    color: #4ecdc4;
+    font-weight: 300;
+    color: #fff;
 }
 
 /* Notícias */
@@ -689,9 +729,10 @@ body.tema-claro .widget {
 }
 
 .noticia-item {
-    background: rgba(255,255,255,0.1);
-    border-radius: 12px;
+    background: #111;
+    border: 1px solid #333;
     padding: 20px;
+    margin-bottom: 1px;
 }
 
 .noticia-item h3 {
@@ -721,11 +762,11 @@ body.tema-claro .widget {
 
 .relogio-display-grande {
     font-size: 72px;
-    font-weight: 700;
-    color: #4ecdc4;
+    font-weight: 300;
+    color: #fff;
     font-family: 'Courier New', monospace;
     margin-bottom: 20px;
-    text-shadow: 0 0 20px rgba(78,205,196,0.5);
+    letter-spacing: 4px;
 }
 
 .relogio-data {
@@ -753,15 +794,15 @@ body.tema-claro .widget {
 }
 
 .modal-content {
-    background: rgba(26,26,46,0.98);
-    border-radius: 20px;
+    background: #000;
+    border-radius: 0;
     padding: 30px;
     width: 90%;
     max-width: 400px;
     max-height: 90vh;
     overflow-y: auto;
     position: relative;
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid #333;
 }
 
 .close {
@@ -787,42 +828,45 @@ body.tema-claro .widget {
     width: 100%;
     padding: 12px;
     margin-bottom: 15px;
-    background: rgba(255,255,255,0.1);
-    border: 2px solid rgba(255,255,255,0.2);
-    border-radius: 12px;
+    background: #111;
+    border: 1px solid #333;
     color: #fff;
     font-size: 14px;
+    font-weight: 300;
 }
 
 .textarea-field {
     width: 100%;
     padding: 12px;
     margin-bottom: 15px;
-    background: rgba(255,255,255,0.1);
-    border: 2px solid rgba(255,255,255,0.2);
-    border-radius: 12px;
+    background: #111;
+    border: 1px solid #333;
     color: #fff;
     font-size: 14px;
     min-height: 100px;
     resize: vertical;
     font-family: inherit;
+    font-weight: 300;
 }
 
 .btn-primary {
     width: 100%;
     padding: 15px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
-    border-radius: 12px;
+    background: #dc143c;
+    border: 1px solid #dc143c;
     color: #fff;
-    font-size: 16px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 300;
     cursor: pointer;
     margin-top: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.2s;
 }
 
 .btn-primary:active {
-    transform: scale(0.98);
+    background: #b0122a;
+    border-color: #b0122a;
 }
 
 /* Scrollbar personalizada */

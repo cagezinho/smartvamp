@@ -10,15 +10,12 @@
     <div class="phone-container">
         <div class="phone-screen">
             <div class="login-container">
-                <div class="logo">
-                    <h1>SMARTVAMP</h1>
-                    <p>Vampiro: A Máscara</p>
+                <div class="login-message">
+                    <p>Digite a senha para desbloquear</p>
                 </div>
                 
                 <div class="login-form">
-                    <input type="text" id="login-nome" placeholder="Nome do jogador" class="input-field" autocomplete="off">
-                    <input type="password" id="login-senha" placeholder="Senha" class="input-field" autocomplete="off">
-                    <button onclick="fazerLogin()" class="btn-unlock">Desbloquear</button>
+                    <input type="password" id="login-senha" placeholder="Senha" class="input-field" autocomplete="off" inputmode="numeric" pattern="[0-9]*" maxlength="10">
                     <div id="login-erro" class="erro-mensagem"></div>
                 </div>
                 
@@ -42,10 +39,13 @@
         atualizarHora();
         setInterval(atualizarHora, 1000);
         
-        // Enter para fazer login
+        // Enter ou qualquer tecla numérica para fazer login
         document.getElementById('login-senha').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') fazerLogin();
         });
+        
+        // Focar no campo de senha ao carregar
+        document.getElementById('login-senha').focus();
     </script>
 </body>
 </html>

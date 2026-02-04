@@ -36,12 +36,11 @@ async function verificarAuth() {
 }
 
 async function fazerLogin() {
-    const nome = document.getElementById('login-nome').value;
     const senha = document.getElementById('login-senha').value;
     const erroDiv = document.getElementById('login-erro');
     
-    if (!nome || !senha) {
-        erroDiv.textContent = 'Preencha todos os campos';
+    if (!senha) {
+        erroDiv.textContent = 'Digite a senha';
         return;
     }
     
@@ -49,14 +48,19 @@ async function fazerLogin() {
         const res = await fetch(`${API_BASE}auth.php`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ acao: 'login', nome, senha })
+            body: JSON.stringify({ acao: 'login', senha })
         });
         const data = await res.json();
         
         if (data.sucesso) {
             window.location.href = 'app.html';
         } else {
-            erroDiv.textContent = data.erro || 'Erro ao fazer login';
+            erroDiv.textContent = data.erro || 'Senha incorreta';
+            // Limpar campo após erro
+            setTimeout(() => {
+                document.getElementById('login-senha').value = '';
+                document.getElementById('login-senha').focus();
+            }, 1000);
         }
     } catch (error) {
         erroDiv.textContent = 'Erro de conexão';
