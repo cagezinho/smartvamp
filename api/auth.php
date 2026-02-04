@@ -1,18 +1,20 @@
 <?php
 // Tratamento de erros para debug
 error_reporting(E_ALL);
-ini_set('display_errors', 0); // Não mostrar erros na tela, apenas no log
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
 
-try {
-    require_once '../config.php';
-} catch (Exception $e) {
+header('Content-Type: application/json; charset=utf-8');
+
+// Carregar config
+$config_path = __DIR__ . '/../config.php';
+if (!file_exists($config_path)) {
     http_response_code(500);
-    header('Content-Type: application/json; charset=utf-8');
-    echo json_encode(['erro' => 'Erro ao carregar configuração: ' . $e->getMessage()]);
+    echo json_encode(['erro' => 'Arquivo config.php não encontrado em: ' . $config_path]);
     exit;
 }
 
-header('Content-Type: application/json; charset=utf-8');
+require_once $config_path;
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -34,32 +36,24 @@ if ($method === 'POST') {
             jsonResponse(['erro' => 'Erro ao conectar com o banco de dados'], 500);
         }
         
+        // Buscar usuário pela senha (simplificado)
+        $usuario = null;
+        
         try {
-            // Buscar usuário apenas pela senha (senha numérica como identificador único)
-            // Tenta com 'ativo' primeiro, se falhar tenta sem
-            try {
-                $stmt = $pdo->prepare("SELECT id, nome, senha, saldo, tema FROM usuarios WHERE senha = ? AND ativo = 1");
-                $stmt->execute([$senha]);
-            } catch (PDOException $e) {
-                // Se falhar, tenta sem a coluna 'ativo'
-                $stmt = $pdo->prepare("SELECT id, nome, senha, saldo, tema FROM usuarios WHERE senha = ?");
-                $stmt->execute([$senha]);
-            }
+            // Primeiro tenta buscar direto pela senha
+            $stmt = $pdo->prepare("SELECT id, nome, senha, saldo, COALESCE(tema, 'escuro') as tema FROM usuarios WHERE senha = ?");
+            $stmt->execute([$senha]);
             $usuario = $stmt->fetch();
             
-            // Se não encontrou com senha direta, tentar verificar hash
+            // Se não encontrou, busca todos e compara
             if (!$usuario) {
-                try {
-                    $stmt = $pdo->prepare("SELECT id, nome, senha, saldo, tema FROM usuarios WHERE ativo = 1");
-                    $stmt->execute();
-                } catch (PDOException $e) {
-                    $stmt = $pdo->prepare("SELECT id, nome, senha, saldo, tema FROM usuarios");
-                    $stmt->execute();
-                }
+                $stmt = $pdo->prepare("SELECT id, nome, senha, saldo, COALESCE(tema, 'escuro') as tema FROM usuarios");
+                $stmt->execute();
                 $todos_usuarios = $stmt->fetchAll();
                 
                 foreach ($todos_usuarios as $u) {
-                    if (password_verify($senha, $u['senha']) || $senha === $u['senha']) {
+                    // Compara senha direta ou hash
+                    if ($senha === $u['senha'] || (function_exists('password_verify') && password_verify($senha, $u['senha']))) {
                         $usuario = $u;
                         break;
                     }
@@ -67,26 +61,33 @@ if ($method === 'POST') {
             }
         } catch (PDOException $e) {
             error_log('Erro SQL: ' . $e->getMessage());
-            jsonResponse(['erro' => 'Erro ao buscar usuário no banco de dados'], 500);
+            error_log('SQL State: ' . $e->getCode());
+            jsonResponse(['erro' => 'Erro ao buscar usuário: ' . $e->getMessage()], 500);
         }
         
         if ($usuario) {
-            session_start();
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
             $_SESSION['usuario_id'] = $usuario['id'];
             $_SESSION['usuario_nome'] = $usuario['nome'];
             $_SESSION['is_admin'] = ($usuario['nome'] === 'Admin');
             
-            // Atualizar último acesso
-            $stmt = $pdo->prepare("UPDATE usuarios SET ultimo_acesso = NOW() WHERE id = ?");
-            $stmt->execute([$usuario['id']]);
+            // Atualizar último acesso (tenta, mas não falha se a coluna não existir)
+            try {
+                $stmt = $pdo->prepare("UPDATE usuarios SET ultimo_acesso = NOW() WHERE id = ?");
+                $stmt->execute([$usuario['id']]);
+            } catch (PDOException $e) {
+                // Ignora erro se coluna não existir
+            }
             
             jsonResponse([
                 'sucesso' => true,
                 'usuario' => [
                     'id' => $usuario['id'],
                     'nome' => $usuario['nome'],
-                    'saldo' => floatval($usuario['saldo']),
-                    'tema' => $usuario['tema'],
+                    'saldo' => floatval($usuario['saldo'] ?? 0),
+                    'tema' => $usuario['tema'] ?? 'escuro',
                     'is_admin' => $_SESSION['is_admin']
                 ]
             ]);
@@ -96,13 +97,17 @@ if ($method === 'POST') {
     }
     
     if ($acao === 'logout') {
-        session_start();
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
         session_destroy();
         jsonResponse(['sucesso' => true]);
     }
     
     if ($acao === 'verificar') {
-        session_start();
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
         if (isset($_SESSION['usuario_id'])) {
             $pdo = getDB();
             $stmt = $pdo->prepare("SELECT id, nome, saldo, tema FROM usuarios WHERE id = ?");
