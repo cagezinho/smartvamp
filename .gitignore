@@ -1,5 +1,5 @@
 # Configurações locais
-config.php
+# config.php - removido para permitir deploy
 
 # Uploads
 uploads/*
