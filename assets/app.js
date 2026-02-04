@@ -215,7 +215,9 @@ function abrirPix(tipo) {
     modal.classList.add('active');
 }
 
-document.getElementById('form-pix').addEventListener('submit', async (e) => {
+const formPix = document.getElementById('form-pix');
+if (formPix) {
+    formPix.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const tipo = document.getElementById('pix-tipo').value;
@@ -248,7 +250,8 @@ document.getElementById('form-pix').addEventListener('submit', async (e) => {
     } catch (error) {
         alert('Erro ao processar PIX');
     }
-});
+    });
+}
 
 // ========== CONTATOS ==========
 async function carregarContatos() {
@@ -305,7 +308,9 @@ function abrirModalContato(id = null) {
     modal.classList.add('active');
 }
 
-document.getElementById('form-contato').addEventListener('submit', async (e) => {
+const formContato = document.getElementById('form-contato');
+if (formContato) {
+    formContato.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const id = document.getElementById('contato-id').value;
@@ -337,7 +342,8 @@ document.getElementById('form-contato').addEventListener('submit', async (e) => 
     } catch (error) {
         alert('Erro ao salvar contato');
     }
-});
+    });
+}
 
 // ========== CHAT ==========
 async function carregarChat() {
@@ -531,7 +537,9 @@ function abrirModalItem(id = null) {
     modal.classList.add('active');
 }
 
-document.getElementById('form-item').addEventListener('submit', async (e) => {
+const formItem = document.getElementById('form-item');
+if (formItem) {
+    formItem.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const id = document.getElementById('item-id').value;
@@ -561,7 +569,8 @@ document.getElementById('form-item').addEventListener('submit', async (e) => {
     } catch (error) {
         alert('Erro ao salvar item');
     }
-});
+    });
+}
 
 // ========== NOTÍCIAS ==========
 async function carregarNoticias() {
