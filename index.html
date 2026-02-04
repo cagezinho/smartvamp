@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SmartVamp - Login</title>
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="login-screen">
+    <div class="phone-container">
+        <div class="phone-screen">
+            <div class="login-container">
+                <div class="logo">
+                    <h1>SMARTVAMP</h1>
+                    <p>Vampiro: A Máscara</p>
+                </div>
+                
+                <div class="login-form">
+                    <input type="text" id="login-nome" placeholder="Nome do jogador" class="input-field" autocomplete="off">
+                    <input type="password" id="login-senha" placeholder="Senha" class="input-field" autocomplete="off">
+                    <button onclick="fazerLogin()" class="btn-unlock">Desbloquear</button>
+                    <div id="login-erro" class="erro-mensagem"></div>
+                </div>
+                
+                <div class="status-bar">
+                    <span id="status-bateria">100%</span>
+                    <span id="status-hora"></span>
+                    <span id="status-sinal">●●●</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="assets/app.js"></script>
+    <script>
+        // Atualizar hora
+        function atualizarHora() {
+            const agora = new Date();
+            document.getElementById('status-hora').textContent = 
+                agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        }
+        atualizarHora();
+        setInterval(atualizarHora, 1000);
+        
+        // Enter para fazer login
+        document.getElementById('login-senha').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') fazerLogin();
+        });
+    </script>
+</body>
+</html>

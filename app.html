@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SmartVamp</title>
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="app-screen" id="app-body">
+    <div class="phone-container">
+        <div class="phone-screen">
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <span id="status-bateria">100%</span>
+                <span id="status-hora"></span>
+                <span id="status-sinal">●●●</span>
+            </div>
+            
+            <!-- Header do App -->
+            <div class="app-header">
+                <h1 id="app-titulo">SMARTVAMP</h1>
+                <button onclick="toggleMenu()" class="btn-menu">☰</button>
+            </div>
+            
+            <!-- Menu Lateral -->
+            <div class="menu-lateral" id="menu-lateral">
+                <div class="menu-header">
+                    <h2>Menu</h2>
+                    <button onclick="toggleMenu()" class="btn-fechar">×</button>
+                </div>
+                <div class="menu-opcoes">
+                    <div class="menu-item" onclick="abrirApp('home')">
+                        <span class="menu-icon">🏠</span> Início
+                    </div>
+                    <div class="menu-item" onclick="abrirApp('banco')">
+                        <span class="menu-icon">💰</span> Banco
+                    </div>
+                    <div class="menu-item" onclick="abrirApp('contatos')">
+                        <span class="menu-icon">👥</span> Contatos
+                    </div>
+                    <div class="menu-item" onclick="abrirApp('chat')">
+                        <span class="menu-icon">💬</span> Mensagens
+                    </div>
+                    <div class="menu-item" onclick="abrirApp('inventario')">
+                        <span class="menu-icon">🎒</span> Inventário
+                    </div>
+                    <div class="menu-item" onclick="abrirApp('noticias')">
+                        <span class="menu-icon">📰</span> Notícias
+                    </div>
+                    <div class="menu-item" onclick="abrirApp('relogio')">
+                        <span class="menu-icon">🕐</span> Relógio
+                    </div>
+                    <div class="menu-item" onclick="toggleTema()">
+                        <span class="menu-icon">🌓</span> Tema
+                    </div>
+                    <div class="menu-item" onclick="logout()">
+                        <span class="menu-icon">🔒</span> Sair
+                    </div>
+                    <div class="menu-item admin-link" id="admin-link" onclick="abrirAdmin()" style="display: none;">
+                        <span class="menu-icon">⚙️</span> Admin
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Conteúdo Principal -->
+            <div class="app-content" id="app-content">
+                <!-- Tela Home -->
+                <div id="app-home" class="app-tela active">
+                    <div class="home-widgets">
+                        <div class="widget saldo">
+                            <h3>Saldo</h3>
+                            <p class="valor-grande" id="home-saldo">R$ 0,00</p>
+                        </div>
+                        <div class="widget relogio-widget">
+                            <h3>Relógio</h3>
+                            <p class="valor-grande" id="home-relogio">--:--</p>
+                        </div>
+                        <div class="widget notificacoes">
+                            <h3>Notificações</h3>
+                            <div id="home-notificacoes"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tela Banco -->
+                <div id="app-banco" class="app-tela">
+                    <div class="tela-header">
+                        <h2>💰 Banco</h2>
+                    </div>
+                    <div class="banco-saldo">
+                        <p>Saldo Disponível</p>
+                        <h2 id="banco-saldo-valor">R$ 0,00</h2>
+                    </div>
+                    <div class="banco-opcoes">
+                        <button onclick="abrirPix('enviar')" class="btn-opcao">Enviar PIX</button>
+                        <button onclick="abrirPix('receber')" class="btn-opcao">Receber PIX</button>
+                    </div>
+                    <div class="transacoes-lista" id="transacoes-lista"></div>
+                </div>
+                
+                <!-- Tela Contatos -->
+                <div id="app-contatos" class="app-tela">
+                    <div class="tela-header">
+                        <h2>👥 Contatos</h2>
+                        <button onclick="abrirModalContato()" class="btn-add">+</button>
+                    </div>
+                    <div class="filtros">
+                        <select id="filtro-grupo" class="select-filtro" onchange="carregarContatos()">
+                            <option value="">Todos os grupos</option>
+                        </select>
+                    </div>
+                    <div class="contatos-lista" id="contatos-lista"></div>
+                </div>
+                
+                <!-- Tela Chat -->
+                <div id="app-chat" class="app-tela">
+                    <div class="chat-lista" id="chat-lista"></div>
+                </div>
+                
+                <!-- Tela Inventário -->
+                <div id="app-inventario" class="app-tela">
+                    <div class="tela-header">
+                        <h2>🎒 Inventário</h2>
+                        <button onclick="abrirModalItem()" class="btn-add">+</button>
+                    </div>
+                    <div class="inventario-lista" id="inventario-lista"></div>
+                </div>
+                
+                <!-- Tela Notícias -->
+                <div id="app-noticias" class="app-tela">
+                    <div class="tela-header">
+                        <h2>📰 Notícias</h2>
+                    </div>
+                    <div class="noticias-lista" id="noticias-lista"></div>
+                </div>
+                
+                <!-- Tela Relógio -->
+                <div id="app-relogio" class="app-tela">
+                    <div class="relogio-tela">
+                        <div class="relogio-display-grande" id="relogio-display-grande"></div>
+                        <p class="relogio-data" id="relogio-data"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modais -->
+    <div id="modal-pix" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="fecharModal('modal-pix')">&times;</span>
+            <h3 id="modal-pix-titulo">Enviar PIX</h3>
+            <form id="form-pix">
+                <input type="hidden" id="pix-tipo">
+                <input type="text" id="pix-chave" placeholder="Chave PIX" class="input-field">
+                <input type="text" id="pix-nome" placeholder="Nome do destinatário" class="input-field">
+                <input type="number" id="pix-valor" placeholder="Valor (R$)" class="input-field" step="0.01" min="0.01">
+                <textarea id="pix-descricao" placeholder="Descrição (opcional)" class="textarea-field"></textarea>
+                <button type="submit" class="btn-primary">Confirmar</button>
+            </form>
+        </div>
+    </div>
+    
+    <div id="modal-contato" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="fecharModal('modal-contato')">&times;</span>
+            <h3 id="modal-contato-titulo">Novo Contato</h3>
+            <form id="form-contato">
+                <input type="hidden" id="contato-id">
+                <input type="text" id="contato-nome" placeholder="Nome" class="input-field" required>
+                <input type="text" id="contato-telefone" placeholder="Telefone" class="input-field">
+                <select id="contato-grupo" class="select-field"></select>
+                <input type="text" id="contato-endereco" placeholder="Endereço" class="input-field">
+                <input type="text" id="contato-profissao" placeholder="Profissão" class="input-field">
+                <textarea id="contato-notas" placeholder="Notas" class="textarea-field"></textarea>
+                <button type="submit" class="btn-primary">Salvar</button>
+            </form>
+        </div>
+    </div>
+    
+    <div id="modal-item" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="fecharModal('modal-item')">&times;</span>
+            <h3 id="modal-item-titulo">Novo Item</h3>
+            <form id="form-item">
+                <input type="hidden" id="item-id">
+                <input type="text" id="item-nome" placeholder="Nome do item" class="input-field" required>
+                <input type="text" id="item-categoria" placeholder="Categoria (ex: Armas, Munição)" class="input-field">
+                <input type="number" id="item-quantidade" placeholder="Quantidade" class="input-field" min="1" value="1">
+                <textarea id="item-descricao" placeholder="Descrição" class="textarea-field"></textarea>
+                <button type="submit" class="btn-primary">Salvar</button>
+            </form>
+        </div>
+    </div>
+    
+    <script src="assets/app.js"></script>
+</body>
+</html>
