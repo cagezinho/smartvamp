@@ -22,7 +22,15 @@
                 </div>
                 
                 <div class="login-form">
-                    <input type="password" id="login-senha" placeholder="Senha" class="input-field" autocomplete="off" inputmode="numeric" pattern="[0-9]*" maxlength="10">
+                    <div class="senha-input-wrapper">
+                        <input type="password" id="login-senha" placeholder="Senha" class="input-field" autocomplete="off" inputmode="numeric" pattern="[0-9]*" maxlength="10">
+                        <button onclick="fazerLogin()" class="btn-enviar-senha" id="btn-enviar-senha">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                        </button>
+                    </div>
                     <div id="login-erro" class="erro-mensagem"></div>
                 </div>
             </div>

@@ -1,3 +1,4 @@
+// Caminho da API - ajuste conforme necessário
 const API_BASE = 'api/';
 let usuario = null;
 let conversaAtual = null;
@@ -38,11 +39,17 @@ async function verificarAuth() {
 async function fazerLogin() {
     const senha = document.getElementById('login-senha').value;
     const erroDiv = document.getElementById('login-erro');
+    const btnEnviar = document.getElementById('btn-enviar-senha');
     
     if (!senha) {
         erroDiv.textContent = 'Digite a senha';
         return;
     }
+    
+    // Desabilitar botão durante requisição
+    btnEnviar.disabled = true;
+    btnEnviar.style.opacity = '0.5';
+    erroDiv.textContent = '';
     
     try {
         const res = await fetch(`${API_BASE}auth.php`, {
@@ -50,6 +57,11 @@ async function fazerLogin() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ acao: 'login', senha })
         });
+        
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        
         const data = await res.json();
         
         if (data.sucesso) {
@@ -60,10 +72,19 @@ async function fazerLogin() {
             setTimeout(() => {
                 document.getElementById('login-senha').value = '';
                 document.getElementById('login-senha').focus();
+                btnEnviar.disabled = false;
+                btnEnviar.style.opacity = '1';
             }, 1000);
         }
     } catch (error) {
-        erroDiv.textContent = 'Erro de conexão';
+        console.error('Erro de conexão:', error);
+        erroDiv.textContent = 'Erro de conexão. Verifique: 1) Se o servidor está online 2) Se a pasta api/ existe 3) Se o config.php está configurado';
+        btnEnviar.disabled = false;
+        btnEnviar.style.opacity = '1';
+        
+        // Mostrar detalhes do erro no console para debug
+        console.log('URL tentada:', `${API_BASE}auth.php`);
+        console.log('Caminho atual:', window.location.pathname);
     }
 }
 

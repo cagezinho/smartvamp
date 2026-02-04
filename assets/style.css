@@ -125,11 +125,21 @@ body.tema-claro .input-field:focus {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    gap: 20px;
+}
+
+.senha-input-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    width: 100%;
+    max-width: 300px;
+    position: relative;
 }
 
 .input-field {
-    width: 100%;
-    max-width: 300px;
+    flex: 1;
     padding: 20px;
     background: transparent;
     border: none;
@@ -145,6 +155,40 @@ body.tema-claro .input-field:focus {
 
 .input-field:focus {
     border-bottom-color: #dc143c;
+}
+
+.btn-enviar-senha {
+    width: 50px;
+    height: 50px;
+    background: transparent;
+    border: 1px solid #fff;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    padding: 0;
+    outline: none;
+}
+
+.btn-enviar-senha:hover {
+    background: #dc143c;
+    border-color: #dc143c;
+}
+
+.btn-enviar-senha:active {
+    background: #b0122a;
+    border-color: #b0122a;
+}
+
+.btn-enviar-senha:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-enviar-senha svg {
+    stroke: currentColor;
 }
 
 .input-field::placeholder {
