@@ -117,7 +117,13 @@ async function fazerLogin() {
         console.log('Resposta do servidor:', data);
         
         if (data.sucesso) {
-            window.location.href = 'app.html';
+            console.log('Login bem-sucedido! Redirecionando para app.html...');
+            // Usar caminho relativo baseado na localização atual
+            const currentPath = window.location.pathname;
+            const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+            const appPath = basePath + 'app.html';
+            console.log('Redirecionando para:', appPath);
+            window.location.href = appPath;
         } else {
             erroDiv.textContent = data.erro || 'Senha incorreta';
             console.error('Erro de login:', data.erro);
