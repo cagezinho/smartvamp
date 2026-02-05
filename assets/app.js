@@ -62,11 +62,17 @@ async function verificarAuth() {
 }
 
 async function fazerLogin() {
+    console.log('=== FUNÇÃO fazerLogin CHAMADA ===');
+    
     const senha = document.getElementById('login-senha').value;
     const erroDiv = document.getElementById('login-erro');
     const btnEnviar = document.getElementById('btn-enviar-senha');
     
+    console.log('Senha digitada:', senha);
+    console.log('Elementos encontrados:', { senha: !!senha, erroDiv: !!erroDiv, btnEnviar: !!btnEnviar });
+    
     if (!senha) {
+        console.log('Senha vazia, mostrando erro');
         erroDiv.textContent = 'Digite a senha';
         return;
     }
@@ -76,9 +82,13 @@ async function fazerLogin() {
     btnEnviar.style.opacity = '0.5';
     erroDiv.textContent = '';
     
+    console.log('Iniciando requisição de login...');
+    
     try {
         const url = `${API_BASE}auth.php`;
-        console.log('Tentando fazer login em:', url);
+        console.log('=== INÍCIO DA REQUISIÇÃO ===');
+        console.log('URL completa:', url);
+        console.log('API_BASE:', API_BASE);
         console.log('Senha enviada:', senha);
         
         const res = await fetch(url, {
@@ -91,12 +101,15 @@ async function fazerLogin() {
             credentials: 'same-origin'
         });
         
+        console.log('=== RESPOSTA RECEBIDA ===');
         console.log('Status da resposta:', res.status);
-        console.log('Headers da resposta:', res.headers);
+        console.log('Status OK?', res.ok);
         
         if (!res.ok) {
             const errorText = await res.text();
-            console.error('Erro HTTP:', res.status, errorText);
+            console.error('=== ERRO HTTP ===');
+            console.error('Status:', res.status);
+            console.error('Resposta:', errorText);
             erroDiv.textContent = `Erro ${res.status}: ${errorText || 'Erro desconhecido'}`;
             btnEnviar.disabled = false;
             btnEnviar.style.opacity = '1';
@@ -106,29 +119,40 @@ async function fazerLogin() {
         let data;
         try {
             const text = await res.text();
-            console.log('Resposta bruta:', text);
+            console.log('=== RESPOSTA BRUTA ===');
+            console.log('Texto:', text);
             data = JSON.parse(text);
+            console.log('=== JSON PARSED ===');
+            console.log('Dados:', data);
         } catch (e) {
-            console.error('Erro ao parsear JSON:', e);
+            console.error('=== ERRO AO PARSEAR JSON ===');
+            console.error('Erro:', e);
+            console.error('Texto recebido:', text || 'N/A');
             erroDiv.textContent = 'Erro no formato da resposta do servidor. Verifique o console (F12)';
             btnEnviar.disabled = false;
             btnEnviar.style.opacity = '1';
             return;
         }
         
-        console.log('Resposta do servidor:', data);
+        console.log('=== PROCESSANDO RESPOSTA ===');
+        console.log('Data.sucesso?', data.sucesso);
+        console.log('Data completa:', JSON.stringify(data, null, 2));
         
         if (data.sucesso) {
-            console.log('Login bem-sucedido! Redirecionando para app.html...');
+            console.log('=== LOGIN BEM-SUCEDIDO ===');
+            console.log('Redirecionando...');
             // Usar caminho relativo baseado na localização atual
             const currentPath = window.location.pathname;
             const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
             const appPath = basePath + 'app.html';
+            console.log('Caminho atual:', currentPath);
+            console.log('Caminho base:', basePath);
             console.log('Redirecionando para:', appPath);
             window.location.href = appPath;
         } else {
+            console.error('=== LOGIN FALHOU ===');
+            console.error('Erro:', data.erro);
             erroDiv.textContent = data.erro || 'Senha incorreta';
-            console.error('Erro de login:', data.erro);
             // Limpar campo após erro
             setTimeout(() => {
                 document.getElementById('login-senha').value = '';
@@ -138,9 +162,11 @@ async function fazerLogin() {
             }, 2000);
         }
     } catch (error) {
-        console.error('Erro de conexão:', error);
+        console.error('=== ERRO CAPTURADO ===');
+        console.error('Tipo:', error.constructor.name);
+        console.error('Mensagem:', error.message);
         console.error('Stack trace:', error.stack);
-        erroDiv.textContent = `Erro de conexão: ${error.message}. Verifique o console (F12) para mais detalhes`;
+        erroDiv.textContent = `Erro: ${error.message}. Abra o console (F12) para mais detalhes`;
         btnEnviar.disabled = false;
         btnEnviar.style.opacity = '1';
         
@@ -149,6 +175,8 @@ async function fazerLogin() {
         console.log('Caminho atual:', window.location.pathname);
         console.log('URL completa seria:', new URL(`${API_BASE}auth.php`, window.location.href).href);
     }
+    
+    console.log('=== FIM DA FUNÇÃO fazerLogin ===');
 }
 
 function logout() {

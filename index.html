@@ -39,6 +39,9 @@
     
     <script src="assets/app.js"></script>
     <script>
+        console.log('=== INDEX.HTML CARREGADO ===');
+        console.log('Verificando se fazerLogin existe:', typeof fazerLogin);
+        
         // Atualizar hora
         function atualizarHora() {
             const agora = new Date();
@@ -48,13 +51,44 @@
         atualizarHora();
         setInterval(atualizarHora, 1000);
         
-        // Enter ou qualquer tecla numérica para fazer login
-        document.getElementById('login-senha').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') fazerLogin();
-        });
+        // Verificar se o botão existe
+        const btnEnviar = document.getElementById('btn-enviar-senha');
+        console.log('Botão encontrado:', !!btnEnviar);
+        if (btnEnviar) {
+            console.log('Adicionando listener ao botão...');
+            btnEnviar.addEventListener('click', function(e) {
+                console.log('=== BOTÃO CLICADO ===');
+                e.preventDefault();
+                if (typeof fazerLogin === 'function') {
+                    fazerLogin();
+                } else {
+                    console.error('ERRO: fazerLogin não é uma função!');
+                    alert('Erro: função fazerLogin não encontrada. Verifique o console (F12)');
+                }
+            });
+        }
+        
+        // Enter para fazer login
+        const inputSenha = document.getElementById('login-senha');
+        if (inputSenha) {
+            inputSenha.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    console.log('=== ENTER PRESSIONADO ===');
+                    if (typeof fazerLogin === 'function') {
+                        fazerLogin();
+                    } else {
+                        console.error('ERRO: fazerLogin não é uma função!');
+                    }
+                }
+            });
+        }
         
         // Focar no campo de senha ao carregar
-        document.getElementById('login-senha').focus();
+        if (inputSenha) {
+            inputSenha.focus();
+        }
+        
+        console.log('=== INICIALIZAÇÃO CONCLUÍDA ===');
     </script>
 </body>
 </html>
