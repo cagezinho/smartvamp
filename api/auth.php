@@ -41,13 +41,13 @@ if ($method === 'POST') {
         
         try {
             // Primeiro tenta buscar direto pela senha
-            $stmt = $pdo->prepare("SELECT id, nome, senha, saldo, COALESCE(tema, 'escuro') as tema FROM usuarios WHERE senha = ?");
+            $stmt = $pdo->prepare("SELECT id, nome, senha, saldo, COALESCE(tema, 'escuro') as tema, COALESCE(is_admin, 0) as is_admin FROM usuarios WHERE senha = ?");
             $stmt->execute([$senha]);
             $usuario = $stmt->fetch();
             
             // Se não encontrou, busca todos e compara
             if (!$usuario) {
-                $stmt = $pdo->prepare("SELECT id, nome, senha, saldo, COALESCE(tema, 'escuro') as tema FROM usuarios");
+                $stmt = $pdo->prepare("SELECT id, nome, senha, saldo, COALESCE(tema, 'escuro') as tema, COALESCE(is_admin, 0) as is_admin FROM usuarios");
                 $stmt->execute();
                 $todos_usuarios = $stmt->fetchAll();
                 
@@ -71,7 +71,7 @@ if ($method === 'POST') {
             }
             $_SESSION['usuario_id'] = $usuario['id'];
             $_SESSION['usuario_nome'] = $usuario['nome'];
-            $_SESSION['is_admin'] = ($usuario['nome'] === 'Admin');
+            $_SESSION['is_admin'] = ($usuario['nome'] === 'Admin' || ($usuario['is_admin'] ?? 0) == 1);
             
             // Atualizar último acesso (tenta, mas não falha se a coluna não existir)
             try {
@@ -92,6 +92,8 @@ if ($method === 'POST') {
                 ]
             ]);
         } else {
+            // Log para debug
+            error_log('Tentativa de login falhou. Senha recebida: ' . $senha);
             jsonResponse(['erro' => 'Senha incorreta'], 401);
         }
     }

@@ -65,19 +65,32 @@ async function fazerLogin() {
             throw new Error(`HTTP error! status: ${res.status}`);
         }
         
-        const data = await res.json();
+        let data;
+        try {
+            data = await res.json();
+        } catch (e) {
+            const text = await res.text();
+            console.error('Resposta não é JSON:', text);
+            erroDiv.textContent = 'Erro no servidor. Verifique o console (F12)';
+            btnEnviar.disabled = false;
+            btnEnviar.style.opacity = '1';
+            return;
+        }
+        
+        console.log('Resposta do servidor:', data);
         
         if (data.sucesso) {
             window.location.href = 'app.html';
         } else {
             erroDiv.textContent = data.erro || 'Senha incorreta';
+            console.error('Erro de login:', data.erro);
             // Limpar campo após erro
             setTimeout(() => {
                 document.getElementById('login-senha').value = '';
                 document.getElementById('login-senha').focus();
                 btnEnviar.disabled = false;
                 btnEnviar.style.opacity = '1';
-            }, 1000);
+            }, 2000);
         }
     } catch (error) {
         console.error('Erro de conexão:', error);
