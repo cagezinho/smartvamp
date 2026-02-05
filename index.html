@@ -23,7 +23,8 @@
                 
                 <div class="login-form">
                     <div class="senha-input-wrapper">
-                        <input type="password" id="login-senha" placeholder="Senha" class="input-field" autocomplete="off" inputmode="numeric" pattern="[0-9]*" maxlength="10">
+                        <input type="text" id="login-usuario" placeholder="Usuário (opcional)" class="input-field" autocomplete="username" style="font-size: 18px; letter-spacing: 2px; margin-bottom: 15px;">
+                        <input type="password" id="login-senha" placeholder="Senha" class="input-field" autocomplete="current-password" inputmode="numeric" pattern="[0-9]*" maxlength="10">
                         <button onclick="fazerLogin()" class="btn-enviar-senha" id="btn-enviar-senha">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -37,10 +38,19 @@
         </div>
     </div>
     
-    <script src="assets/app.js"></script>
     <script>
-        console.log('=== INDEX.HTML CARREGADO ===');
-        console.log('Verificando se fazerLogin existe:', typeof fazerLogin);
+        // Detectar caminho da API
+        const API_BASE = (() => {
+            const path = window.location.pathname;
+            const pathParts = path.split('/').filter(p => p);
+            if (pathParts.length > 0 && pathParts[pathParts.length - 1].includes('.')) {
+                pathParts.pop();
+            }
+            const basePath = pathParts.length > 0 ? '/' + pathParts.join('/') + '/' : '/';
+            return basePath + 'api/';
+        })();
+        
+        console.log('API_BASE:', API_BASE);
         
         // Atualizar hora
         function atualizarHora() {
@@ -51,44 +61,90 @@
         atualizarHora();
         setInterval(atualizarHora, 1000);
         
-        // Verificar se o botão existe
-        const btnEnviar = document.getElementById('btn-enviar-senha');
-        console.log('Botão encontrado:', !!btnEnviar);
-        if (btnEnviar) {
-            console.log('Adicionando listener ao botão...');
-            btnEnviar.addEventListener('click', function(e) {
-                console.log('=== BOTÃO CLICADO ===');
-                e.preventDefault();
-                if (typeof fazerLogin === 'function') {
-                    fazerLogin();
-                } else {
-                    console.error('ERRO: fazerLogin não é uma função!');
-                    alert('Erro: função fazerLogin não encontrada. Verifique o console (F12)');
+        // Função de login simplificada e funcional
+        async function fazerLogin() {
+            const usuario = document.getElementById('login-usuario').value.trim();
+            const senha = document.getElementById('login-senha').value.trim();
+            const erroDiv = document.getElementById('login-erro');
+            const btnEnviar = document.getElementById('btn-enviar-senha');
+            
+            // Limpar erro anterior
+            erroDiv.textContent = '';
+            erroDiv.style.display = 'none';
+            
+            if (!senha) {
+                erroDiv.textContent = 'Digite a senha';
+                erroDiv.style.display = 'block';
+                return;
+            }
+            
+            // Desabilitar botão
+            btnEnviar.disabled = true;
+            btnEnviar.style.opacity = '0.5';
+            
+            try {
+                const url = API_BASE + 'auth.php';
+                console.log('Fazendo login em:', url);
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        acao: 'login',
+                        usuario: usuario,
+                        senha: senha
+                    })
+                });
+                
+                const text = await response.text();
+                console.log('Resposta:', text);
+                
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    throw new Error('Resposta inválida do servidor: ' + text);
                 }
-            });
+                
+                if (data.sucesso) {
+                    // Login bem-sucedido
+                    const currentPath = window.location.pathname;
+                    const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+                    window.location.href = basePath + 'app.html';
+                } else {
+                    // Erro de login
+                    erroDiv.textContent = data.erro || 'Usuário ou senha incorretos';
+                    erroDiv.style.display = 'block';
+                    document.getElementById('login-senha').value = '';
+                    document.getElementById('login-senha').focus();
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                erroDiv.textContent = 'Erro de conexão: ' + error.message;
+                erroDiv.style.display = 'block';
+            } finally {
+                btnEnviar.disabled = false;
+                btnEnviar.style.opacity = '1';
+            }
         }
         
         // Enter para fazer login
-        const inputSenha = document.getElementById('login-senha');
-        if (inputSenha) {
-            inputSenha.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    console.log('=== ENTER PRESSIONADO ===');
-                    if (typeof fazerLogin === 'function') {
-                        fazerLogin();
-                    } else {
-                        console.error('ERRO: fazerLogin não é uma função!');
-                    }
-                }
-            });
-        }
+        document.getElementById('login-senha').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                fazerLogin();
+            }
+        });
+        
+        document.getElementById('login-usuario').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('login-senha').focus();
+            }
+        });
         
         // Focar no campo de senha ao carregar
-        if (inputSenha) {
-            inputSenha.focus();
-        }
-        
-        console.log('=== INICIALIZAÇÃO CONCLUÍDA ===');
+        document.getElementById('login-senha').focus();
     </script>
 </body>
 </html>

@@ -1,16 +1,14 @@
 <?php
-// Tratamento de erros para debug
+// Sistema de autenticação simplificado e funcional
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
 header('Content-Type: application/json; charset=utf-8');
-// Permitir CORS se necessário
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
-// Responder a requisições OPTIONS (preflight)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
@@ -20,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $config_path = __DIR__ . '/../config.php';
 if (!file_exists($config_path)) {
     http_response_code(500);
-    echo json_encode(['erro' => 'Arquivo config.php não encontrado em: ' . $config_path]);
+    echo json_encode(['erro' => 'Arquivo config.php não encontrado']);
     exit;
 }
 
@@ -33,10 +31,15 @@ if ($method === 'POST') {
     $acao = $data['acao'] ?? '';
     
     if ($acao === 'login') {
-        $senha = $data['senha'] ?? '';
+        $usuario_input = trim($data['usuario'] ?? '');
+        $senha_input = trim($data['senha'] ?? '');
         
-        if (empty($senha)) {
-            jsonResponse(['erro' => 'Senha é obrigatória'], 400);
+        if (empty($usuario_input) && empty($senha_input)) {
+            // Se não enviou usuário nem senha, tenta apenas com senha (compatibilidade)
+            $senha_input = trim($data['senha'] ?? '');
+            if (empty($senha_input)) {
+                jsonResponse(['erro' => 'Usuário e senha são obrigatórios'], 400);
+            }
         }
         
         try {
@@ -46,24 +49,37 @@ if ($method === 'POST') {
             jsonResponse(['erro' => 'Erro ao conectar com o banco de dados'], 500);
         }
         
-        // Buscar usuário pela senha (simplificado)
         $usuario = null;
         
         try {
-            // Primeiro tenta buscar direto pela senha
-            $stmt = $pdo->prepare("SELECT id, nome, senha, saldo, COALESCE(tema, 'escuro') as tema FROM usuarios WHERE senha = ?");
-            $stmt->execute([$senha]);
-            $usuario = $stmt->fetch();
+            // Primeiro tenta buscar por usuário e senha
+            if (!empty($usuario_input)) {
+                $stmt = $pdo->prepare("SELECT id, nome, usuario, senha, saldo, COALESCE(tema, 'escuro') as tema FROM usuarios WHERE usuario = ? AND senha = ?");
+                $stmt->execute([$usuario_input, $senha_input]);
+                $usuario = $stmt->fetch();
+            }
             
-            // Se não encontrou, busca todos e compara
+            // Se não encontrou, tenta apenas por senha (compatibilidade com sistema antigo)
             if (!$usuario) {
-                $stmt = $pdo->prepare("SELECT id, nome, senha, saldo, COALESCE(tema, 'escuro') as tema FROM usuarios");
+                $stmt = $pdo->prepare("SELECT id, nome, usuario, senha, saldo, COALESCE(tema, 'escuro') as tema FROM usuarios WHERE senha = ?");
+                $stmt->execute([$senha_input]);
+                $usuario = $stmt->fetch();
+            }
+            
+            // Se ainda não encontrou, busca todos e compara
+            if (!$usuario) {
+                $stmt = $pdo->prepare("SELECT id, nome, usuario, senha, saldo, COALESCE(tema, 'escuro') as tema FROM usuarios");
                 $stmt->execute();
                 $todos_usuarios = $stmt->fetchAll();
                 
                 foreach ($todos_usuarios as $u) {
-                    // Compara senha direta ou hash
-                    if ($senha === $u['senha'] || (function_exists('password_verify') && password_verify($senha, $u['senha']))) {
+                    // Compara senha direta
+                    if ($senha_input === $u['senha']) {
+                        $usuario = $u;
+                        break;
+                    }
+                    // Ou compara hash se existir
+                    if (function_exists('password_verify') && password_verify($senha_input, $u['senha'])) {
                         $usuario = $u;
                         break;
                     }
@@ -71,7 +87,6 @@ if ($method === 'POST') {
             }
         } catch (PDOException $e) {
             error_log('Erro SQL: ' . $e->getMessage());
-            error_log('SQL State: ' . $e->getCode());
             jsonResponse(['erro' => 'Erro ao buscar usuário: ' . $e->getMessage()], 500);
         }
         
@@ -81,9 +96,9 @@ if ($method === 'POST') {
             }
             $_SESSION['usuario_id'] = $usuario['id'];
             $_SESSION['usuario_nome'] = $usuario['nome'];
-            $_SESSION['is_admin'] = ($usuario['nome'] === 'Admin');
+            $_SESSION['is_admin'] = ($usuario['nome'] === 'Admin' || ($usuario['usuario'] ?? '') === 'admin');
             
-            // Atualizar último acesso (tenta, mas não falha se a coluna não existir)
+            // Atualizar último acesso
             try {
                 $stmt = $pdo->prepare("UPDATE usuarios SET ultimo_acesso = NOW() WHERE id = ?");
                 $stmt->execute([$usuario['id']]);
@@ -102,9 +117,8 @@ if ($method === 'POST') {
                 ]
             ]);
         } else {
-            // Log para debug
-            error_log('Tentativa de login falhou. Senha recebida: ' . $senha);
-            jsonResponse(['erro' => 'Senha incorreta'], 401);
+            error_log('Tentativa de login falhou. Usuário: ' . $usuario_input . ', Senha recebida: ' . $senha_input);
+            jsonResponse(['erro' => 'Usuário ou senha incorretos'], 401);
         }
     }
     
@@ -121,22 +135,26 @@ if ($method === 'POST') {
             session_start();
         }
         if (isset($_SESSION['usuario_id'])) {
-            $pdo = getDB();
-            $stmt = $pdo->prepare("SELECT id, nome, saldo, tema FROM usuarios WHERE id = ?");
-            $stmt->execute([$_SESSION['usuario_id']]);
-            $usuario = $stmt->fetch();
-            
-            if ($usuario) {
-                jsonResponse([
-                    'autenticado' => true,
-                    'usuario' => [
-                        'id' => $usuario['id'],
-                        'nome' => $usuario['nome'],
-                        'saldo' => floatval($usuario['saldo']),
-                        'tema' => $usuario['tema'],
-                        'is_admin' => $_SESSION['is_admin'] ?? false
-                    ]
-                ]);
+            try {
+                $pdo = getDB();
+                $stmt = $pdo->prepare("SELECT id, nome, saldo, COALESCE(tema, 'escuro') as tema FROM usuarios WHERE id = ?");
+                $stmt->execute([$_SESSION['usuario_id']]);
+                $usuario = $stmt->fetch();
+                
+                if ($usuario) {
+                    jsonResponse([
+                        'autenticado' => true,
+                        'usuario' => [
+                            'id' => $usuario['id'],
+                            'nome' => $usuario['nome'],
+                            'saldo' => floatval($usuario['saldo']),
+                            'tema' => $usuario['tema'],
+                            'is_admin' => $_SESSION['is_admin'] ?? false
+                        ]
+                    ]);
+                }
+            } catch (Exception $e) {
+                error_log('Erro ao verificar: ' . $e->getMessage());
             }
         }
         jsonResponse(['autenticado' => false], 401);
