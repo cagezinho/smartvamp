@@ -51,7 +51,9 @@ async function verificarAuth() {
             atualizarStatusBar();
             carregarHome();
         } else {
-            window.location.href = 'index.html';
+            const currentPath = window.location.pathname;
+            const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+            window.location.href = basePath + 'index.html';
         }
     } catch (error) {
         console.error('Erro ao verificar auth:', error);
