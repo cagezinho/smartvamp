@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Teste de API</title>
+</head>
+<body>
+    <h1>Teste de Conexão com API</h1>
+    <button onclick="testarAPI()">Testar Login</button>
+    <div id="resultado" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;"></div>
+    
+    <script>
+        const API_BASE = (() => {
+            const path = window.location.pathname;
+            const pathParts = path.split('/').filter(p => p);
+            if (pathParts.length > 0 && pathParts[pathParts.length - 1].includes('.')) {
+                pathParts.pop();
+            }
+            const basePath = pathParts.length > 0 ? '/' + pathParts.join('/') + '/' : '/';
+            return basePath + 'api/';
+        })();
+        
+        console.log('API_BASE:', API_BASE);
+        console.log('URL completa seria:', new URL(API_BASE + 'auth.php', window.location.href).href);
+        
+        async function testarAPI() {
+            const resultado = document.getElementById('resultado');
+            resultado.innerHTML = 'Testando...';
+            
+            try {
+                const url = API_BASE + 'auth.php';
+                console.log('Tentando:', url);
+                
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ acao: 'login', senha: '0896' })
+                });
+                
+                console.log('Status:', res.status);
+                const text = await res.text();
+                console.log('Resposta:', text);
+                
+                resultado.innerHTML = `
+                    <strong>Status:</strong> ${res.status}<br>
+                    <strong>Resposta:</strong> ${text}<br>
+                    <strong>URL usada:</strong> ${url}
+                `;
+            } catch (error) {
+                console.error('Erro:', error);
+                resultado.innerHTML = `<strong>Erro:</strong> ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

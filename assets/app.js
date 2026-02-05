@@ -1,14 +1,25 @@
-// Caminho da API - detecta automaticamente
+// Caminho da API - detecta automaticamente baseado na URL atual
 const API_BASE = (() => {
+    // Pega o caminho atual e remove o nome do arquivo
     const path = window.location.pathname;
-    // Se estiver em uma subpasta (ex: /vampire/), usar caminho relativo
-    if (path.includes('/vampire/') || path.includes('/smartvamp/')) {
-        const basePath = path.substring(0, path.lastIndexOf('/') + 1);
-        return basePath + 'api/';
+    const pathParts = path.split('/').filter(p => p);
+    
+    // Remove o nome do arquivo (index.html, app.html, etc)
+    if (pathParts.length > 0 && pathParts[pathParts.length - 1].includes('.')) {
+        pathParts.pop();
     }
-    return 'api/';
+    
+    // Monta o caminho base
+    const basePath = pathParts.length > 0 ? '/' + pathParts.join('/') + '/' : '/';
+    const apiPath = basePath + 'api/';
+    
+    console.log('URL atual:', window.location.href);
+    console.log('Pathname:', path);
+    console.log('Caminho base detectado:', basePath);
+    console.log('API_BASE configurado como:', apiPath);
+    
+    return apiPath;
 })();
-console.log('API_BASE configurado como:', API_BASE);
 let usuario = null;
 let conversaAtual = null;
 let intervalos = [];
