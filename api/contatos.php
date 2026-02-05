@@ -1,22 +1,29 @@
 <?php
-require_once '../config.php';
+/**
+ * API de Contatos - SmartVamp
+ * Gerencia contatos (NPCs) com correlação por telefone
+ */
+
+require_once __DIR__ . '/../config.php';
 
 $usuario_id = verificarAuth();
+$is_admin = $_SESSION['is_admin'] ?? false;
 $method = $_SERVER['REQUEST_METHOD'];
 $pdo = getDB();
 
+// ========== GET: Buscar contatos ==========
 if ($method === 'GET') {
     // Buscar grupos
     $stmt = $pdo->query("SELECT id, nome, cor FROM grupos_contatos ORDER BY nome");
     $grupos = $stmt->fetchAll();
     
-    // Buscar contatos do usuário e contatos globais (criados pelo mestre)
+    // Buscar contatos: próprios + globais (criados pelo mestre)
     $stmt = $pdo->prepare("
         SELECT c.*, g.nome as grupo_nome, g.cor as grupo_cor 
         FROM contatos c
         LEFT JOIN grupos_contatos g ON c.grupo_id = g.id
-        WHERE c.usuario_id = ? OR c.criado_por = 'mestre'
-        ORDER BY c.nome
+        WHERE (c.usuario_id = ? OR c.criado_por = 'mestre' OR c.usuario_id IS NULL)
+        ORDER BY c.nome ASC
     ");
     $stmt->execute([$usuario_id]);
     $contatos = $stmt->fetchAll();
@@ -27,24 +34,26 @@ if ($method === 'GET') {
     ]);
 }
 
+// ========== POST: Operações com contatos ==========
 if ($method === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
     $acao = $data['acao'] ?? '';
     
+    // ========== ADICIONAR CONTATO ==========
     if ($acao === 'adicionar') {
-        $nome = $data['nome'] ?? '';
-        $telefone = $data['telefone'] ?? '';
-        $grupo_id = $data['grupo_id'] ?? null;
-        $endereco = $data['endereco'] ?? '';
-        $profissao = $data['profissao'] ?? '';
-        $notas = $data['notas'] ?? '';
-        $avatar = $data['avatar'] ?? '';
+        $nome = trim($data['nome'] ?? '');
+        $telefone = trim($data['telefone'] ?? '');
+        $grupo_id = !empty($data['grupo_id']) ? (int)$data['grupo_id'] : null;
+        $endereco = trim($data['endereco'] ?? '');
+        $profissao = trim($data['profissao'] ?? '');
+        $notas = trim($data['notas'] ?? '');
+        $avatar = trim($data['avatar'] ?? '');
         
         if (empty($nome)) {
             jsonResponse(['erro' => 'Nome é obrigatório'], 400);
         }
         
-        // Verificar se já existe contato com este telefone (correlacionar)
+        // Verificar se já existe contato com este telefone (correlação)
         $contato_existente = null;
         if (!empty($telefone)) {
             $stmt = $pdo->prepare("
@@ -57,7 +66,7 @@ if ($method === 'POST') {
             $contato_existente = $stmt->fetch();
         }
         
-        // Se já existe contato com este telefone, criar apenas para este usuário (não duplicar para mestre)
+        // Se já existe contato com este telefone, criar apenas para este usuário
         if ($contato_existente) {
             // Verificar se o usuário já tem este contato
             $stmt = $pdo->prepare("
@@ -78,7 +87,11 @@ if ($method === 'POST') {
             ");
             $stmt->execute([$usuario_id, $grupo_id, $nome, $telefone, $avatar, $endereco, $profissao, $notas]);
             
-            jsonResponse(['sucesso' => true, 'id' => $pdo->lastInsertId()]);
+            jsonResponse([
+                'sucesso' => true,
+                'id' => (int)$pdo->lastInsertId(),
+                'mensagem' => 'Contato adicionado com sucesso'
+            ]);
         } else {
             // Novo contato, criar normalmente
             $stmt = $pdo->prepare("
@@ -87,27 +100,45 @@ if ($method === 'POST') {
             ");
             $stmt->execute([$usuario_id, $grupo_id, $nome, $telefone, $avatar, $endereco, $profissao, $notas]);
             
-            jsonResponse(['sucesso' => true, 'id' => $pdo->lastInsertId()]);
+            jsonResponse([
+                'sucesso' => true,
+                'id' => (int)$pdo->lastInsertId(),
+                'mensagem' => 'Contato adicionado com sucesso'
+            ]);
         }
     }
     
+    // ========== EDITAR CONTATO ==========
     if ($acao === 'editar') {
-        $id = $data['id'] ?? 0;
-        $nome = $data['nome'] ?? '';
-        $telefone = $data['telefone'] ?? '';
-        $grupo_id = $data['grupo_id'] ?? null;
-        $endereco = $data['endereco'] ?? '';
-        $profissao = $data['profissao'] ?? '';
-        $notas = $data['notas'] ?? '';
-        $avatar = $data['avatar'] ?? '';
+        $id = (int)($data['id'] ?? 0);
+        $nome = trim($data['nome'] ?? '');
+        $telefone = trim($data['telefone'] ?? '');
+        $grupo_id = !empty($data['grupo_id']) ? (int)$data['grupo_id'] : null;
+        $endereco = trim($data['endereco'] ?? '');
+        $profissao = trim($data['profissao'] ?? '');
+        $notas = trim($data['notas'] ?? '');
+        $avatar = trim($data['avatar'] ?? '');
         
-        // Verificar se o contato pertence ao usuário
-        $stmt = $pdo->prepare("SELECT usuario_id FROM contatos WHERE id = ?");
+        if (empty($nome)) {
+            jsonResponse(['erro' => 'Nome é obrigatório'], 400);
+        }
+        
+        // Verificar se o contato pertence ao usuário ou é admin
+        $stmt = $pdo->prepare("SELECT usuario_id, criado_por FROM contatos WHERE id = ?");
         $stmt->execute([$id]);
         $contato = $stmt->fetch();
         
-        if (!$contato || ($contato['usuario_id'] != $usuario_id && !isset($_SESSION['is_admin']))) {
+        if (!$contato) {
             jsonResponse(['erro' => 'Contato não encontrado'], 404);
+        }
+        
+        // Verificar permissão
+        $pode_editar = ($contato['usuario_id'] == $usuario_id) || 
+                       ($contato['criado_por'] === 'mestre' && $is_admin) ||
+                       $is_admin;
+        
+        if (!$pode_editar) {
+            jsonResponse(['erro' => 'Você não tem permissão para editar este contato'], 403);
         }
         
         $stmt = $pdo->prepare("
@@ -117,25 +148,41 @@ if ($method === 'POST') {
         ");
         $stmt->execute([$nome, $telefone, $grupo_id, $endereco, $profissao, $notas, $avatar, $id]);
         
-        jsonResponse(['sucesso' => true]);
+        jsonResponse([
+            'sucesso' => true,
+            'mensagem' => 'Contato atualizado com sucesso'
+        ]);
     }
     
+    // ========== EXCLUIR CONTATO ==========
     if ($acao === 'excluir') {
-        $id = $data['id'] ?? 0;
+        $id = (int)($data['id'] ?? 0);
         
         // Verificar se o contato pertence ao usuário
-        $stmt = $pdo->prepare("SELECT usuario_id FROM contatos WHERE id = ?");
+        $stmt = $pdo->prepare("SELECT usuario_id, criado_por FROM contatos WHERE id = ?");
         $stmt->execute([$id]);
         $contato = $stmt->fetch();
         
-        if (!$contato || ($contato['usuario_id'] != $usuario_id && !isset($_SESSION['is_admin']))) {
+        if (!$contato) {
             jsonResponse(['erro' => 'Contato não encontrado'], 404);
+        }
+        
+        // Verificar permissão
+        $pode_excluir = ($contato['usuario_id'] == $usuario_id) || 
+                        ($contato['criado_por'] === 'mestre' && $is_admin) ||
+                        $is_admin;
+        
+        if (!$pode_excluir) {
+            jsonResponse(['erro' => 'Você não tem permissão para excluir este contato'], 403);
         }
         
         $stmt = $pdo->prepare("DELETE FROM contatos WHERE id = ?");
         $stmt->execute([$id]);
         
-        jsonResponse(['sucesso' => true]);
+        jsonResponse([
+            'sucesso' => true,
+            'mensagem' => 'Contato excluído com sucesso'
+        ]);
     }
 }
 

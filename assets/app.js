@@ -1,30 +1,26 @@
-// Caminho da API - detecta automaticamente baseado na URL atual
+/**
+ * SmartVamp - Aplicativo Principal
+ * Sistema completo de gerenciamento para RPG Vampiro: A Máscara
+ */
+
+// ========== CONFIGURAÇÃO ==========
 const API_BASE = (() => {
-    // Pega o caminho atual e remove o nome do arquivo
     const path = window.location.pathname;
     const pathParts = path.split('/').filter(p => p);
-    
-    // Remove o nome do arquivo (index.html, app.html, etc)
     if (pathParts.length > 0 && pathParts[pathParts.length - 1].includes('.')) {
         pathParts.pop();
     }
-    
-    // Monta o caminho base
     const basePath = pathParts.length > 0 ? '/' + pathParts.join('/') + '/' : '/';
-    const apiPath = basePath + 'api/';
-    
-    console.log('URL atual:', window.location.href);
-    console.log('Pathname:', path);
-    console.log('Caminho base detectado:', basePath);
-    console.log('API_BASE configurado como:', apiPath);
-    
-    return apiPath;
+    return basePath + 'api/';
 })();
+
+// ========== ESTADO GLOBAL ==========
 let usuario = null;
 let conversaAtual = null;
-let intervalos = [];
+let intervalos = {};
+let contatosCache = [];
 
-// Verificar autenticação ao carregar
+// ========== INICIALIZAÇÃO ==========
 if (window.location.pathname.includes('app.html')) {
     verificarAuth();
 }
@@ -35,157 +31,46 @@ async function verificarAuth() {
         const res = await fetch(`${API_BASE}auth.php`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ acao: 'verificar' })
+            body: JSON.stringify({ acao: 'verificar' }),
+            credentials: 'same-origin'
         });
+        
         const data = await res.json();
         
         if (data.autenticado) {
             usuario = data.usuario;
             aplicarTema(usuario.tema);
+            
             if (usuario.is_admin) {
                 const adminIcon = document.getElementById('admin-icon');
-                if (adminIcon) {
-                    adminIcon.style.display = 'flex';
-                }
+                if (adminIcon) adminIcon.style.display = 'flex';
             }
+            
             atualizarStatusBar();
             carregarHome();
         } else {
-            const currentPath = window.location.pathname;
-            const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
-            window.location.href = basePath + 'index.html';
+            redirecionarLogin();
         }
     } catch (error) {
         console.error('Erro ao verificar auth:', error);
-        window.location.href = 'index.html';
+        redirecionarLogin();
     }
 }
 
-async function fazerLogin() {
-    console.log('=== FUNÇÃO fazerLogin CHAMADA ===');
-    
-    const senha = document.getElementById('login-senha').value;
-    const erroDiv = document.getElementById('login-erro');
-    const btnEnviar = document.getElementById('btn-enviar-senha');
-    
-    console.log('Senha digitada:', senha);
-    console.log('Elementos encontrados:', { senha: !!senha, erroDiv: !!erroDiv, btnEnviar: !!btnEnviar });
-    
-    if (!senha) {
-        console.log('Senha vazia, mostrando erro');
-        erroDiv.textContent = 'Digite a senha';
-        return;
-    }
-    
-    // Desabilitar botão durante requisição
-    btnEnviar.disabled = true;
-    btnEnviar.style.opacity = '0.5';
-    erroDiv.textContent = '';
-    
-    console.log('Iniciando requisição de login...');
-    
-    try {
-        const url = `${API_BASE}auth.php`;
-        console.log('=== INÍCIO DA REQUISIÇÃO ===');
-        console.log('URL completa:', url);
-        console.log('API_BASE:', API_BASE);
-        console.log('Senha enviada:', senha);
-        
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({ acao: 'login', senha }),
-            credentials: 'same-origin'
-        });
-        
-        console.log('=== RESPOSTA RECEBIDA ===');
-        console.log('Status da resposta:', res.status);
-        console.log('Status OK?', res.ok);
-        
-        if (!res.ok) {
-            const errorText = await res.text();
-            console.error('=== ERRO HTTP ===');
-            console.error('Status:', res.status);
-            console.error('Resposta:', errorText);
-            erroDiv.textContent = `Erro ${res.status}: ${errorText || 'Erro desconhecido'}`;
-            btnEnviar.disabled = false;
-            btnEnviar.style.opacity = '1';
-            return;
-        }
-        
-        let data;
-        try {
-            const text = await res.text();
-            console.log('=== RESPOSTA BRUTA ===');
-            console.log('Texto:', text);
-            data = JSON.parse(text);
-            console.log('=== JSON PARSED ===');
-            console.log('Dados:', data);
-        } catch (e) {
-            console.error('=== ERRO AO PARSEAR JSON ===');
-            console.error('Erro:', e);
-            console.error('Texto recebido:', text || 'N/A');
-            erroDiv.textContent = 'Erro no formato da resposta do servidor. Verifique o console (F12)';
-            btnEnviar.disabled = false;
-            btnEnviar.style.opacity = '1';
-            return;
-        }
-        
-        console.log('=== PROCESSANDO RESPOSTA ===');
-        console.log('Data.sucesso?', data.sucesso);
-        console.log('Data completa:', JSON.stringify(data, null, 2));
-        
-        if (data.sucesso) {
-            console.log('=== LOGIN BEM-SUCEDIDO ===');
-            console.log('Redirecionando...');
-            // Usar caminho relativo baseado na localização atual
-            const currentPath = window.location.pathname;
-            const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
-            const appPath = basePath + 'app.html';
-            console.log('Caminho atual:', currentPath);
-            console.log('Caminho base:', basePath);
-            console.log('Redirecionando para:', appPath);
-            window.location.href = appPath;
-        } else {
-            console.error('=== LOGIN FALHOU ===');
-            console.error('Erro:', data.erro);
-            erroDiv.textContent = data.erro || 'Senha incorreta';
-            // Limpar campo após erro
-            setTimeout(() => {
-                document.getElementById('login-senha').value = '';
-                document.getElementById('login-senha').focus();
-                btnEnviar.disabled = false;
-                btnEnviar.style.opacity = '1';
-            }, 2000);
-        }
-    } catch (error) {
-        console.error('=== ERRO CAPTURADO ===');
-        console.error('Tipo:', error.constructor.name);
-        console.error('Mensagem:', error.message);
-        console.error('Stack trace:', error.stack);
-        erroDiv.textContent = `Erro: ${error.message}. Abra o console (F12) para mais detalhes`;
-        btnEnviar.disabled = false;
-        btnEnviar.style.opacity = '1';
-        
-        // Mostrar detalhes do erro no console para debug
-        console.log('URL tentada:', `${API_BASE}auth.php`);
-        console.log('Caminho atual:', window.location.pathname);
-        console.log('URL completa seria:', new URL(`${API_BASE}auth.php`, window.location.href).href);
-    }
-    
-    console.log('=== FIM DA FUNÇÃO fazerLogin ===');
+function redirecionarLogin() {
+    const currentPath = window.location.pathname;
+    const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+    window.location.href = basePath + 'index.html';
 }
 
 function logout() {
     fetch(`${API_BASE}auth.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ acao: 'logout' })
+        body: JSON.stringify({ acao: 'logout' }),
+        credentials: 'same-origin'
     }).then(() => {
-        window.location.href = 'index.html';
+        redirecionarLogin();
     });
 }
 
@@ -207,12 +92,14 @@ function abrirApp(app) {
     }
     
     // Carregar dados específicos
-    if (app === 'home') carregarHome();
-    if (app === 'banco') carregarBanco();
-    if (app === 'contatos') carregarContatos();
-    if (app === 'chat') carregarChat();
-    if (app === 'inventario') carregarInventario();
-    if (app === 'noticias') carregarNoticias();
+    switch(app) {
+        case 'home': carregarHome(); break;
+        case 'banco': carregarBanco(); break;
+        case 'contatos': carregarContatos(); break;
+        case 'chat': carregarChat(); break;
+        case 'inventario': carregarInventario(); break;
+        case 'noticias': carregarNoticias(); break;
+    }
 }
 
 function voltarHome() {
@@ -221,24 +108,25 @@ function voltarHome() {
 
 // ========== HOME ==========
 async function carregarHome() {
-    // Home agora só mostra os ícones, sem widgets
-    // Dados são carregados quando o app específico é aberto
+    // Home só mostra os ícones
 }
 
 // ========== BANCO ==========
 async function carregarBanco() {
     try {
-        const res = await fetch(`${API_BASE}banco.php`);
+        const res = await fetch(`${API_BASE}banco.php`, {
+            credentials: 'same-origin'
+        });
         const data = await res.json();
         
         document.getElementById('banco-saldo-valor').textContent = 
             `R$ ${data.saldo.toFixed(2).replace('.', ',')}`;
         
-        // Carregar chave PIX
+        const chavePixEl = document.getElementById('chave-pix-valor');
         if (data.chave_pix) {
-            document.getElementById('chave-pix-valor').textContent = data.chave_pix;
+            chavePixEl.textContent = data.chave_pix;
         } else {
-            document.getElementById('chave-pix-valor').textContent = 'Não configurada';
+            chavePixEl.textContent = 'Não configurada';
         }
         
         const container = document.getElementById('transacoes-lista');
@@ -248,8 +136,8 @@ async function carregarBanco() {
             container.innerHTML = data.transacoes.map(t => `
                 <div class="transacao-item">
                     <div class="transacao-info">
-                        <h4>${t.descricao || 'Transação'}</h4>
-                        <p>${t.pix_nome ? t.pix_nome + ' | ' : ''}${new Date(t.criado_em).toLocaleString('pt-BR')}</p>
+                        <h4>${escapeHtml(t.descricao || 'Transação')}</h4>
+                        <p>${t.pix_nome ? escapeHtml(t.pix_nome) + ' | ' : ''}${formatarData(t.criado_em)}</p>
                     </div>
                     <div class="transacao-valor ${t.tipo}">
                         ${t.tipo === 'entrada' ? '+' : '-'} R$ ${parseFloat(t.valor).toFixed(2).replace('.', ',')}
@@ -259,6 +147,7 @@ async function carregarBanco() {
         }
     } catch (error) {
         console.error('Erro ao carregar banco:', error);
+        mostrarErro('Erro ao carregar dados do banco');
     }
 }
 
@@ -274,54 +163,62 @@ function editarChavePix() {
 function abrirPix(tipo) {
     const modal = document.getElementById('modal-pix');
     const form = document.getElementById('form-pix');
-    const titulo = document.getElementById('modal-pix-titulo');
-    
     form.reset();
     document.getElementById('pix-tipo').value = 'enviar';
-    titulo.textContent = 'Enviar PIX';
+    document.getElementById('modal-pix-titulo').textContent = 'Enviar PIX';
     modal.classList.add('active');
 }
 
+// Formulário PIX
 const formPix = document.getElementById('form-pix');
 if (formPix) {
     formPix.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const data = {
-            acao: 'pix',
-            tipo: 'enviar',
-            valor: document.getElementById('pix-valor').value,
-            chave: document.getElementById('pix-chave').value,
-            descricao: 'PIX enviado'
-        };
+        const valor = parseFloat(document.getElementById('pix-valor').value);
+        const chave = document.getElementById('pix-chave').value.trim();
+        
+        if (!chave || valor <= 0) {
+            mostrarErro('Preencha todos os campos corretamente');
+            return;
+        }
         
         try {
             const res = await fetch(`${API_BASE}banco.php`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+                body: JSON.stringify({
+                    acao: 'pix',
+                    valor: valor,
+                    chave: chave,
+                    descricao: 'PIX enviado'
+                }),
+                credentials: 'same-origin'
             });
+            
             const result = await res.json();
             
             if (result.sucesso) {
                 fecharModal('modal-pix');
-                carregarBanco();
+                await carregarBanco();
+                mostrarSucesso('PIX enviado com sucesso');
             } else {
-                alert('Erro: ' + result.erro);
+                mostrarErro(result.erro || 'Erro ao enviar PIX');
             }
         } catch (error) {
-            alert('Erro ao processar PIX');
+            console.error('Erro:', error);
+            mostrarErro('Erro ao processar PIX');
         }
     });
 }
 
-// Salvar chave PIX
+// Formulário Chave PIX
 const formChavePix = document.getElementById('form-chave-pix');
 if (formChavePix) {
     formChavePix.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const chave = document.getElementById('nova-chave-pix').value;
+        const chave = document.getElementById('nova-chave-pix').value.trim();
         
         try {
             const res = await fetch(`${API_BASE}banco.php`, {
@@ -330,18 +227,22 @@ if (formChavePix) {
                 body: JSON.stringify({
                     acao: 'salvar_chave_pix',
                     chave_pix: chave
-                })
+                }),
+                credentials: 'same-origin'
             });
+            
             const result = await res.json();
             
             if (result.sucesso) {
                 fecharModal('modal-chave-pix');
-                carregarBanco();
+                await carregarBanco();
+                mostrarSucesso('Chave PIX salva com sucesso');
             } else {
-                alert('Erro: ' + result.erro);
+                mostrarErro(result.erro || 'Erro ao salvar chave PIX');
             }
         } catch (error) {
-            alert('Erro ao salvar chave PIX');
+            console.error('Erro:', error);
+            mostrarErro('Erro ao salvar chave PIX');
         }
     });
 }
@@ -349,22 +250,27 @@ if (formChavePix) {
 // ========== CONTATOS ==========
 async function carregarContatos() {
     try {
-        const res = await fetch(`${API_BASE}contatos.php`);
+        const res = await fetch(`${API_BASE}contatos.php`, {
+            credentials: 'same-origin'
+        });
         const data = await res.json();
+        
+        contatosCache = data.contatos;
         
         // Carregar grupos no filtro
         const selectFiltro = document.getElementById('filtro-grupo');
         selectFiltro.innerHTML = '<option value="">Todos os grupos</option>' +
-            data.grupos.map(g => `<option value="${g.id}">${g.nome}</option>`).join('');
+            data.grupos.map(g => `<option value="${g.id}">${escapeHtml(g.nome)}</option>`).join('');
         
         // Carregar grupos no modal
         const selectModal = document.getElementById('contato-grupo');
         selectModal.innerHTML = '<option value="">Sem grupo</option>' +
-            data.grupos.map(g => `<option value="${g.id}">${g.nome}</option>`).join('');
+            data.grupos.map(g => `<option value="${g.id}">${escapeHtml(g.nome)}</option>`).join('');
         
         filtrarContatos(data.contatos);
     } catch (error) {
         console.error('Erro ao carregar contatos:', error);
+        mostrarErro('Erro ao carregar contatos');
     }
 }
 
@@ -377,13 +283,13 @@ function filtrarContatos(contatos) {
         container.innerHTML = '<p style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">Nenhum contato</p>';
     } else {
         container.innerHTML = filtrados.map(c => `
-            <div class="contato-item" onclick="abrirChatContato(${c.id}, '${c.nome}', '${c.avatar || ''}')">
+            <div class="contato-item" onclick="abrirChatContato(${c.id}, '${escapeHtml(c.nome)}', '${escapeHtml(c.avatar || '')}')">
                 <div class="contato-avatar">${c.nome.charAt(0).toUpperCase()}</div>
                 <div class="contato-info">
-                    <h4>${c.nome}</h4>
-                    <p>${c.telefone || ''} ${c.profissao ? '| ' + c.profissao : ''}</p>
+                    <h4>${escapeHtml(c.nome)}</h4>
+                    <p>${c.telefone ? escapeHtml(c.telefone) + ' ' : ''}${c.profissao ? '| ' + escapeHtml(c.profissao) : ''}</p>
                 </div>
-                ${c.grupo_nome ? `<span class="contato-grupo">${c.grupo_nome}</span>` : ''}
+                ${c.grupo_nome ? `<span class="contato-grupo">${escapeHtml(c.grupo_nome)}</span>` : ''}
             </div>
         `).join('');
     }
@@ -398,50 +304,68 @@ function abrirModalContato(id = null) {
     document.getElementById('contato-id').value = id || '';
     titulo.textContent = id ? 'Editar Contato' : 'Novo Contato';
     
+    if (id) {
+        const contato = contatosCache.find(c => c.id == id);
+        if (contato) {
+            document.getElementById('contato-nome').value = contato.nome || '';
+            document.getElementById('contato-telefone').value = contato.telefone || '';
+            document.getElementById('contato-grupo').value = contato.grupo_id || '';
+            document.getElementById('contato-endereco').value = contato.endereco || '';
+            document.getElementById('contato-profissao').value = contato.profissao || '';
+            document.getElementById('contato-notas').value = contato.notas || '';
+        }
+    }
+    
     modal.classList.add('active');
 }
 
 const formContato = document.getElementById('form-contato');
 if (formContato) {
     formContato.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const id = document.getElementById('contato-id').value;
-    const data = {
-        acao: id ? 'editar' : 'adicionar',
-        id: id || undefined,
-        nome: document.getElementById('contato-nome').value,
-        telefone: document.getElementById('contato-telefone').value,
-        grupo_id: document.getElementById('contato-grupo').value || null,
-        endereco: document.getElementById('contato-endereco').value,
-        profissao: document.getElementById('contato-profissao').value,
-        notas: document.getElementById('contato-notas').value
-    };
-    
-    try {
-        const res = await fetch(`${API_BASE}contatos.php`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        const result = await res.json();
+        e.preventDefault();
         
-        if (result.sucesso) {
-            fecharModal('modal-contato');
-            carregarContatos();
-        } else {
-            alert('Erro: ' + result.erro);
+        const id = document.getElementById('contato-id').value;
+        const data = {
+            acao: id ? 'editar' : 'adicionar',
+            id: id || undefined,
+            nome: document.getElementById('contato-nome').value.trim(),
+            telefone: document.getElementById('contato-telefone').value.trim(),
+            grupo_id: document.getElementById('contato-grupo').value || null,
+            endereco: document.getElementById('contato-endereco').value.trim(),
+            profissao: document.getElementById('contato-profissao').value.trim(),
+            notas: document.getElementById('contato-notas').value.trim()
+        };
+        
+        try {
+            const res = await fetch(`${API_BASE}contatos.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+                credentials: 'same-origin'
+            });
+            
+            const result = await res.json();
+            
+            if (result.sucesso) {
+                fecharModal('modal-contato');
+                await carregarContatos();
+                mostrarSucesso('Contato salvo com sucesso');
+            } else {
+                mostrarErro(result.erro || 'Erro ao salvar contato');
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            mostrarErro('Erro ao salvar contato');
         }
-    } catch (error) {
-        alert('Erro ao salvar contato');
-    }
     });
 }
 
 // ========== CHAT ==========
 async function carregarChat() {
     try {
-        const res = await fetch(`${API_BASE}chat.php`);
+        const res = await fetch(`${API_BASE}chat.php`, {
+            credentials: 'same-origin'
+        });
         const data = await res.json();
         
         const container = document.getElementById('chat-lista');
@@ -450,11 +374,11 @@ async function carregarChat() {
         } else {
             container.innerHTML = data.conversas.map(c => `
                 <div class="conversa-item ${c.nao_lidas > 0 ? 'nao-lidas' : ''}" 
-                     onclick="abrirConversa(${c.id}, '${c.nome_contato}', '${c.avatar_contato || ''}')">
+                     onclick="abrirConversa(${c.id}, '${escapeHtml(c.nome_contato)}', '${escapeHtml(c.avatar_contato || '')}')">
                     <div class="conversa-avatar">${c.nome_contato.charAt(0).toUpperCase()}</div>
                     <div class="conversa-info">
-                        <h4>${c.nome_contato}</h4>
-                        <p>${c.ultima_mensagem || 'Nenhuma mensagem'}</p>
+                        <h4>${escapeHtml(c.nome_contato)}</h4>
+                        <p>${escapeHtml(c.ultima_mensagem || 'Nenhuma mensagem')}</p>
                     </div>
                     ${c.nao_lidas > 0 ? `<div class="conversa-badge">${c.nao_lidas}</div>` : ''}
                 </div>
@@ -462,12 +386,12 @@ async function carregarChat() {
         }
     } catch (error) {
         console.error('Erro ao carregar chat:', error);
+        mostrarErro('Erro ao carregar conversas');
     }
 }
 
 async function abrirChatContato(contato_id, nome, avatar) {
     try {
-        // Criar ou buscar conversa
         const res = await fetch(`${API_BASE}chat.php`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -476,8 +400,10 @@ async function abrirChatContato(contato_id, nome, avatar) {
                 contato_id,
                 nome_contato: nome,
                 avatar_contato: avatar
-            })
+            }),
+            credentials: 'same-origin'
         });
+        
         const data = await res.json();
         
         if (data.sucesso) {
@@ -485,6 +411,7 @@ async function abrirChatContato(contato_id, nome, avatar) {
         }
     } catch (error) {
         console.error('Erro ao criar conversa:', error);
+        mostrarErro('Erro ao criar conversa');
     }
 }
 
@@ -502,7 +429,7 @@ async function abrirConversa(conversa_id, nome, avatar) {
         chatTela.innerHTML = `
             <div class="chat-header">
                 <button onclick="fecharConversa()" class="btn-voltar">←</button>
-                <h3>${nome}</h3>
+                <h3>${escapeHtml(nome)}</h3>
             </div>
             <div class="chat-mensagens" id="chat-mensagens"></div>
             <div class="chat-input-area">
@@ -516,6 +443,8 @@ async function abrirConversa(conversa_id, nome, avatar) {
         document.getElementById('chat-input-text').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') enviarMensagem();
         });
+    } else {
+        chatTela.querySelector('h3').textContent = nome;
     }
     
     document.querySelectorAll('.app-tela').forEach(t => t.classList.remove('active'));
@@ -542,14 +471,16 @@ async function carregarMensagens() {
     if (!conversaAtual) return;
     
     try {
-        const res = await fetch(`${API_BASE}chat.php?conversa_id=${conversaAtual}`);
+        const res = await fetch(`${API_BASE}chat.php?conversa_id=${conversaAtual}`, {
+            credentials: 'same-origin'
+        });
         const data = await res.json();
         
         const container = document.getElementById('chat-mensagens');
         container.innerHTML = data.mensagens.map(m => `
             <div class="mensagem ${m.remetente}">
-                ${m.conteudo}
-                <div class="mensagem-hora">${new Date(m.criado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div>
+                ${escapeHtml(m.conteudo)}
+                <div class="mensagem-hora">${formatarHora(m.criado_em)}</div>
             </div>
         `).join('');
         
@@ -573,23 +504,30 @@ async function enviarMensagem() {
                 acao: 'enviar',
                 conversa_id: conversaAtual,
                 conteudo
-            })
+            }),
+            credentials: 'same-origin'
         });
+        
         const result = await res.json();
         
         if (result.sucesso) {
             input.value = '';
             await carregarMensagens();
+        } else {
+            mostrarErro(result.erro || 'Erro ao enviar mensagem');
         }
     } catch (error) {
         console.error('Erro ao enviar mensagem:', error);
+        mostrarErro('Erro ao enviar mensagem');
     }
 }
 
 // ========== INVENTÁRIO ==========
 async function carregarInventario() {
     try {
-        const res = await fetch(`${API_BASE}inventario.php`);
+        const res = await fetch(`${API_BASE}inventario.php`, {
+            credentials: 'same-origin'
+        });
         const data = await res.json();
         
         const container = document.getElementById('inventario-lista');
@@ -600,12 +538,12 @@ async function carregarInventario() {
         } else {
             container.innerHTML = categorias.map(cat => `
                 <div class="categoria-inventario">
-                    <div class="categoria-titulo">${cat || 'Outros'}</div>
+                    <div class="categoria-titulo">${escapeHtml(cat || 'Outros')}</div>
                     ${data.inventario[cat].map(item => `
                         <div class="item-inventario">
                             <div class="item-info">
-                                <h4>${item.item_nome}</h4>
-                                <p>${item.descricao || ''}</p>
+                                <h4>${escapeHtml(item.item_nome)}</h4>
+                                <p>${escapeHtml(item.descricao || '')}</p>
                             </div>
                             <div class="item-controles">
                                 <button class="btn-quantidade" onclick="alterarQuantidade(${item.id}, -1)">-</button>
@@ -619,6 +557,7 @@ async function carregarInventario() {
         }
     } catch (error) {
         console.error('Erro ao carregar inventário:', error);
+        mostrarErro('Erro ao carregar inventário');
     }
 }
 
@@ -637,64 +576,74 @@ function abrirModalItem(id = null) {
 const formItem = document.getElementById('form-item');
 if (formItem) {
     formItem.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const id = document.getElementById('item-id').value;
-    const data = {
-        acao: id ? 'editar' : 'adicionar',
-        id: id || undefined,
-        item_nome: document.getElementById('item-nome').value,
-        categoria: document.getElementById('item-categoria').value,
-        quantidade: parseInt(document.getElementById('item-quantidade').value),
-        descricao: document.getElementById('item-descricao').value
-    };
-    
-    try {
-        const res = await fetch(`${API_BASE}inventario.php`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        const result = await res.json();
+        e.preventDefault();
         
-        if (result.sucesso) {
-            fecharModal('modal-item');
-            carregarInventario();
-        } else {
-            alert('Erro: ' + result.erro);
+        const id = document.getElementById('item-id').value;
+        const data = {
+            acao: id ? 'editar' : 'adicionar',
+            id: id || undefined,
+            item_nome: document.getElementById('item-nome').value.trim(),
+            categoria: document.getElementById('item-categoria').value.trim(),
+            quantidade: parseInt(document.getElementById('item-quantidade').value) || 1,
+            descricao: document.getElementById('item-descricao').value.trim()
+        };
+        
+        try {
+            const res = await fetch(`${API_BASE}inventario.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+                credentials: 'same-origin'
+            });
+            
+            const result = await res.json();
+            
+            if (result.sucesso) {
+                fecharModal('modal-item');
+                await carregarInventario();
+                mostrarSucesso('Item salvo com sucesso');
+            } else {
+                mostrarErro(result.erro || 'Erro ao salvar item');
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            mostrarErro('Erro ao salvar item');
         }
-    } catch (error) {
-        alert('Erro ao salvar item');
-    }
     });
 }
 
-async async function alterarQuantidade(itemId, delta) {
+async function alterarQuantidade(itemId, delta) {
     try {
         const res = await fetch(`${API_BASE}inventario.php`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                acao: delta > 0 ? 'adicionar' : 'remover',
+                acao: 'alterar_quantidade',
                 id: itemId,
-                quantidade: 1
-            })
+                delta: delta
+            }),
+            credentials: 'same-origin'
         });
+        
         const result = await res.json();
+        
         if (result.sucesso) {
-            carregarInventario();
+            await carregarInventario();
         } else {
-            alert('Erro: ' + result.erro);
+            mostrarErro(result.erro || 'Erro ao alterar quantidade');
         }
     } catch (error) {
-        alert('Erro ao alterar quantidade');
+        console.error('Erro:', error);
+        mostrarErro('Erro ao alterar quantidade');
     }
 }
 
 // ========== NOTÍCIAS ==========
 async function carregarNoticias() {
     try {
-        const res = await fetch(`${API_BASE}noticias.php`);
+        const res = await fetch(`${API_BASE}noticias.php`, {
+            credentials: 'same-origin'
+        });
         const data = await res.json();
         
         const container = document.getElementById('noticias-lista');
@@ -703,68 +652,22 @@ async function carregarNoticias() {
         } else {
             container.innerHTML = data.noticias.map(n => `
                 <div class="noticia-item">
-                    <h3>${n.titulo}</h3>
-                    <p>${n.conteudo}</p>
+                    <h3>${escapeHtml(n.titulo)}</h3>
+                    <p>${escapeHtml(n.conteudo)}</p>
                     <div class="noticia-meta">
-                        <span>${n.autor || 'Anônimo'}</span>
-                        <span>${new Date(n.criado_em).toLocaleDateString('pt-BR')}</span>
+                        <span>${escapeHtml(n.autor || 'Anônimo')}</span>
+                        <span>${formatarData(n.criado_em)}</span>
                     </div>
                 </div>
             `).join('');
         }
     } catch (error) {
         console.error('Erro ao carregar notícias:', error);
-    }
-}
-
-// ========== RELÓGIO ==========
-async function carregarRelogio() {
-    try {
-        const res = await fetch(`${API_BASE}relogio.php`);
-        const data = await res.json();
-        
-        atualizarRelogioDisplay(data);
-        
-        // Atualizar a cada segundo
-        if (intervalos['relogio']) clearInterval(intervalos['relogio']);
-        intervalos['relogio'] = setInterval(async () => {
-            const res = await fetch(`${API_BASE}relogio.php`);
-            const data = await res.json();
-            atualizarRelogioDisplay(data);
-        }, 1000);
-    } catch (error) {
-        console.error('Erro ao carregar relógio:', error);
-    }
-}
-
-function atualizarRelogioDisplay(data) {
-    const display = document.getElementById('relogio-display-grande');
-    const dataDisplay = document.getElementById('relogio-data');
-    
-    if (data.modo === 'normal') {
-        const agora = new Date();
-        display.textContent = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        dataDisplay.textContent = agora.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    } else {
-        const dataHora = new Date(data.data + ' ' + data.hora);
-        display.textContent = dataHora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        dataDisplay.textContent = dataHora.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        mostrarErro('Erro ao carregar notícias');
     }
 }
 
 // ========== TEMA ==========
-function toggleTema() {
-    const novoTema = document.body.classList.contains('tema-claro') ? 'escuro' : 'claro';
-    
-    fetch(`${API_BASE}tema.php`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tema: novoTema })
-    }).then(() => {
-        aplicarTema(novoTema);
-    });
-}
-
 function aplicarTema(tema) {
     if (tema === 'claro') {
         document.body.classList.add('tema-claro');
@@ -775,26 +678,81 @@ function aplicarTema(tema) {
 
 // ========== UTILITÁRIOS ==========
 function fecharModal(modalId) {
-    document.getElementById(modalId).classList.remove('active');
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('active');
+    }
 }
 
 function atualizarStatusBar() {
     const agora = new Date();
-    document.getElementById('status-hora').textContent = 
-        agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const horaEl = document.getElementById('status-hora');
+    if (horaEl) {
+        horaEl.textContent = agora.toLocaleTimeString('pt-BR', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+    }
     
     setInterval(() => {
         const agora = new Date();
-        document.getElementById('status-hora').textContent = 
-            agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        if (horaEl) {
+            horaEl.textContent = agora.toLocaleTimeString('pt-BR', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        }
     }, 1000);
 }
 
 function abrirAdmin() {
-    window.open('admin/index.php', '_blank');
+    const currentPath = window.location.pathname;
+    const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+    window.open(basePath + 'admin/index.php', '_blank');
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function formatarData(data) {
+    if (!data) return '';
+    const d = new Date(data);
+    return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    });
+}
+
+function formatarHora(data) {
+    if (!data) return '';
+    const d = new Date(data);
+    return d.toLocaleTimeString('pt-BR', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    });
+}
+
+function mostrarErro(mensagem) {
+    // Implementar toast de erro
+    alert(mensagem);
+}
+
+function mostrarSucesso(mensagem) {
+    // Implementar toast de sucesso
+    console.log('Sucesso:', mensagem);
 }
 
 // Limpar intervalos ao sair
 window.addEventListener('beforeunload', () => {
     Object.values(intervalos).forEach(interval => clearInterval(interval));
+});
+
+// Fechar modais ao clicar fora
+document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal')) {
+        e.target.classList.remove('active');
+    }
 });
