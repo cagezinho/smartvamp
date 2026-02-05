@@ -125,6 +125,28 @@ if ($method === 'POST') {
         
         jsonResponse(['sucesso' => true]);
     }
+    
+    // Adicionar quantidade a item existente (para botão +)
+    if ($acao === 'adicionar' && isset($data['id'])) {
+        $id = $data['id'] ?? 0;
+        $quantidade = intval($data['quantidade'] ?? 1);
+        
+        // Verificar se o item pertence ao usuário
+        $stmt = $pdo->prepare("SELECT usuario_id, quantidade FROM inventario WHERE id = ?");
+        $stmt->execute([$id]);
+        $item = $stmt->fetch();
+        
+        if (!$item || ($item['usuario_id'] != $usuario_id && !isset($_SESSION['is_admin']))) {
+            jsonResponse(['erro' => 'Item não encontrado'], 404);
+        }
+        
+        // Adicionar quantidade
+        $nova_quantidade = $item['quantidade'] + $quantidade;
+        $stmt = $pdo->prepare("UPDATE inventario SET quantidade = ? WHERE id = ?");
+        $stmt->execute([$nova_quantidade, $id]);
+        
+        jsonResponse(['sucesso' => true]);
+    }
 }
 
 jsonResponse(['erro' => 'Método não permitido'], 405);

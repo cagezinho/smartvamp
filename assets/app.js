@@ -23,7 +23,10 @@ async function verificarAuth() {
             usuario = data.usuario;
             aplicarTema(usuario.tema);
             if (usuario.is_admin) {
-                document.getElementById('admin-link').style.display = 'block';
+                const adminIcon = document.getElementById('admin-icon');
+                if (adminIcon) {
+                    adminIcon.style.display = 'flex';
+                }
             }
             atualizarStatusBar();
             carregarHome();
@@ -99,23 +102,21 @@ function logout() {
 }
 
 // ========== NAVEGAÇÃO ==========
-function toggleMenu() {
-    const menu = document.getElementById('menu-lateral');
-    menu.classList.toggle('aberto');
-}
-
 function abrirApp(app) {
     document.querySelectorAll('.app-tela').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
     
     const tela = document.getElementById(`app-${app}`);
     if (tela) {
         tela.classList.add('active');
-        document.querySelector(`[onclick="abrirApp('${app}')"]`).classList.add('active');
     }
     
-    toggleMenu();
-    document.getElementById('app-titulo').textContent = tela.querySelector('h2')?.textContent || 'SMARTVAMP';
+    // Mostrar/ocultar botão Home
+    const homeButton = document.getElementById('home-button-container');
+    if (app === 'home') {
+        homeButton.style.display = 'none';
+    } else {
+        homeButton.style.display = 'block';
+    }
     
     // Carregar dados específicos
     if (app === 'home') carregarHome();
@@ -124,48 +125,16 @@ function abrirApp(app) {
     if (app === 'chat') carregarChat();
     if (app === 'inventario') carregarInventario();
     if (app === 'noticias') carregarNoticias();
-    if (app === 'relogio') carregarRelogio();
+}
+
+function voltarHome() {
+    abrirApp('home');
 }
 
 // ========== HOME ==========
 async function carregarHome() {
-    try {
-        // Carregar saldo
-        const resBanco = await fetch(`${API_BASE}banco.php`);
-        const dataBanco = await resBanco.json();
-        document.getElementById('home-saldo').textContent = 
-            `R$ ${dataBanco.saldo.toFixed(2).replace('.', ',')}`;
-        
-        // Carregar relógio
-        const resRelogio = await fetch(`${API_BASE}relogio.php`);
-        const dataRelogio = await resRelogio.json();
-        atualizarRelogioHome(dataRelogio);
-        
-        // Carregar notificações (mensagens não lidas)
-        const resChat = await fetch(`${API_BASE}chat.php`);
-        const dataChat = await resChat.json();
-        const nao_lidas = dataChat.conversas.filter(c => c.nao_lidas > 0).length;
-        
-        const notifDiv = document.getElementById('home-notificacoes');
-        if (nao_lidas > 0) {
-            notifDiv.innerHTML = `<p style="color: #4ecdc4; font-weight: 700;">${nao_lidas} mensagem(ns) não lida(s)</p>`;
-        } else {
-            notifDiv.innerHTML = '<p style="color: rgba(255,255,255,0.5);">Nenhuma notificação</p>';
-        }
-    } catch (error) {
-        console.error('Erro ao carregar home:', error);
-    }
-}
-
-function atualizarRelogioHome(data) {
-    const display = document.getElementById('home-relogio');
-    if (data.modo === 'normal') {
-        const agora = new Date();
-        display.textContent = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    } else {
-        const dataHora = new Date(data.data + ' ' + data.hora);
-        display.textContent = dataHora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    }
+    // Home agora só mostra os ícones, sem widgets
+    // Dados são carregados quando o app específico é aberto
 }
 
 // ========== BANCO ==========
@@ -176,6 +145,13 @@ async function carregarBanco() {
         
         document.getElementById('banco-saldo-valor').textContent = 
             `R$ ${data.saldo.toFixed(2).replace('.', ',')}`;
+        
+        // Carregar chave PIX
+        if (data.chave_pix) {
+            document.getElementById('chave-pix-valor').textContent = data.chave_pix;
+        } else {
+            document.getElementById('chave-pix-valor').textContent = 'Não configurada';
+        }
         
         const container = document.getElementById('transacoes-lista');
         if (data.transacoes.length === 0) {
@@ -198,58 +174,87 @@ async function carregarBanco() {
     }
 }
 
+function editarChavePix() {
+    const modal = document.getElementById('modal-chave-pix');
+    const chaveAtual = document.getElementById('chave-pix-valor').textContent;
+    if (chaveAtual !== 'Não configurada') {
+        document.getElementById('nova-chave-pix').value = chaveAtual;
+    }
+    modal.classList.add('active');
+}
+
 function abrirPix(tipo) {
     const modal = document.getElementById('modal-pix');
     const form = document.getElementById('form-pix');
     const titulo = document.getElementById('modal-pix-titulo');
     
     form.reset();
-    document.getElementById('pix-tipo').value = tipo;
-    titulo.textContent = tipo === 'enviar' ? 'Enviar PIX' : 'Receber PIX';
-    
-    if (tipo === 'receber') {
-        document.getElementById('pix-chave').placeholder = 'Sua chave PIX';
-        document.getElementById('pix-nome').placeholder = 'Seu nome';
-    }
-    
+    document.getElementById('pix-tipo').value = 'enviar';
+    titulo.textContent = 'Enviar PIX';
     modal.classList.add('active');
 }
 
 const formPix = document.getElementById('form-pix');
 if (formPix) {
     formPix.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const tipo = document.getElementById('pix-tipo').value;
-    const data = {
-        acao: 'pix',
-        tipo: tipo === 'enviar' ? 'enviar' : 'receber',
-        valor: document.getElementById('pix-valor').value,
-        chave: document.getElementById('pix-chave').value,
-        nome: document.getElementById('pix-nome').value,
-        descricao: document.getElementById('pix-descricao').value || 
-                   (tipo === 'enviar' ? 'PIX enviado' : 'PIX recebido')
-    };
-    
-    try {
-        const res = await fetch(`${API_BASE}banco.php`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        const result = await res.json();
+        e.preventDefault();
         
-        if (result.sucesso) {
-            alert(result.mensagem);
-            fecharModal('modal-pix');
-            carregarBanco();
-            carregarHome();
-        } else {
-            alert('Erro: ' + result.erro);
+        const data = {
+            acao: 'pix',
+            tipo: 'enviar',
+            valor: document.getElementById('pix-valor').value,
+            chave: document.getElementById('pix-chave').value,
+            descricao: 'PIX enviado'
+        };
+        
+        try {
+            const res = await fetch(`${API_BASE}banco.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            
+            if (result.sucesso) {
+                fecharModal('modal-pix');
+                carregarBanco();
+            } else {
+                alert('Erro: ' + result.erro);
+            }
+        } catch (error) {
+            alert('Erro ao processar PIX');
         }
-    } catch (error) {
-        alert('Erro ao processar PIX');
-    }
+    });
+}
+
+// Salvar chave PIX
+const formChavePix = document.getElementById('form-chave-pix');
+if (formChavePix) {
+    formChavePix.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const chave = document.getElementById('nova-chave-pix').value;
+        
+        try {
+            const res = await fetch(`${API_BASE}banco.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    acao: 'salvar_chave_pix',
+                    chave_pix: chave
+                })
+            });
+            const result = await res.json();
+            
+            if (result.sucesso) {
+                fecharModal('modal-chave-pix');
+                carregarBanco();
+            } else {
+                alert('Erro: ' + result.erro);
+            }
+        } catch (error) {
+            alert('Erro ao salvar chave PIX');
+        }
     });
 }
 
@@ -514,7 +519,11 @@ async function carregarInventario() {
                                 <h4>${item.item_nome}</h4>
                                 <p>${item.descricao || ''}</p>
                             </div>
-                            <div class="item-quantidade">${item.quantidade}x</div>
+                            <div class="item-controles">
+                                <button class="btn-quantidade" onclick="alterarQuantidade(${item.id}, -1)">-</button>
+                                <span class="item-quantidade">${item.quantidade}</span>
+                                <button class="btn-quantidade" onclick="alterarQuantidade(${item.id}, 1)">+</button>
+                            </div>
                         </div>
                     `).join('')}
                 </div>
@@ -570,6 +579,28 @@ if (formItem) {
         alert('Erro ao salvar item');
     }
     });
+}
+
+async async function alterarQuantidade(itemId, delta) {
+    try {
+        const res = await fetch(`${API_BASE}inventario.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                acao: delta > 0 ? 'adicionar' : 'remover',
+                id: itemId,
+                quantidade: 1
+            })
+        });
+        const result = await res.json();
+        if (result.sucesso) {
+            carregarInventario();
+        } else {
+            alert('Erro: ' + result.erro);
+        }
+    } catch (error) {
+        alert('Erro ao alterar quantidade');
+    }
 }
 
 // ========== NOTÍCIAS ==========

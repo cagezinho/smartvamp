@@ -134,7 +134,7 @@ if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['is_admin']) || !$_SESSI
     <div id="modal-contato" class="modal">
         <div class="modal-content">
             <span class="close" onclick="fecharModal('modal-contato')">&times;</span>
-            <h3>Novo Contato Global</h3>
+            <h3 id="modal-contato-titulo">Novo Contato</h3>
             <form id="form-contato">
                 <input type="hidden" id="contato-id">
                 <input type="text" id="contato-nome" placeholder="Nome" class="input-text" required>
@@ -143,6 +143,13 @@ if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['is_admin']) || !$_SESSI
                 <input type="text" id="contato-endereco" placeholder="Endereço" class="input-text">
                 <input type="text" id="contato-profissao" placeholder="Profissão" class="input-text">
                 <textarea id="contato-notas" placeholder="Notas" class="textarea"></textarea>
+                
+                <label style="display: block; margin: 15px 0 10px; font-weight: 600;">Adicionar nas agendas de:</label>
+                <div id="contato-usuarios-checkboxes" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
+                    <!-- Checkboxes serão preenchidos via JavaScript -->
+                </div>
+                <small style="color: #666; display: block; margin-top: 5px;">Deixe vazio para criar como contato global (visível para todos)</small>
+                
                 <button type="submit" class="btn-primary">Salvar</button>
             </form>
         </div>

@@ -44,6 +44,7 @@ async function carregarUsuarios() {
                 <div class="item-actions">
                     <button class="btn-edit" onclick="editarUsuario(${u.id})">Editar</button>
                     <button class="btn-add" onclick="adicionarSaldo(${u.id})">+ Saldo</button>
+                    <button class="btn-delete" onclick="removerUsuario(${u.id}, '${u.nome}')">Remover</button>
                 </div>
             </div>
         `).join('');
@@ -136,6 +137,32 @@ async function adicionarSaldo(usuario_id) {
     }
 }
 
+async function removerUsuario(usuario_id, nome) {
+    if (!confirm(`Tem certeza que deseja remover o usuário "${nome}"? Esta ação não pode ser desfeita.`)) {
+        return;
+    }
+    
+    try {
+        const res = await fetch(ADMIN_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                acao: 'remover_usuario',
+                id: usuario_id
+            })
+        });
+        const result = await res.json();
+        if (result.sucesso) {
+            alert('Usuário removido com sucesso');
+            carregarUsuarios();
+        } else {
+            alert('Erro: ' + result.erro);
+        }
+    } catch (error) {
+        alert('Erro ao remover usuário');
+    }
+}
+
 // ========== TRANSAÇÕES ==========
 async function carregarTransacoes() {
     try {
@@ -191,9 +218,26 @@ async function carregarContatos() {
 function abrirModalContato(id = null) {
     const modal = document.getElementById('modal-contato');
     const form = document.getElementById('form-contato');
+    const titulo = document.getElementById('modal-contato-titulo');
     
     form.reset();
     document.getElementById('contato-id').value = id || '';
+    titulo.textContent = id ? 'Editar Contato' : 'Novo Contato';
+    
+    // Carregar lista de usuários para checkboxes
+    fetch(`${ADMIN_API}?acao=usuarios`)
+        .then(r => r.json())
+        .then(data => {
+            const container = document.getElementById('contato-usuarios-checkboxes');
+            container.innerHTML = data.usuarios
+                .filter(u => u.nome !== 'Admin')
+                .map(u => `
+                    <label style="display: block; margin: 5px 0; cursor: pointer;">
+                        <input type="checkbox" value="${u.id}" class="usuario-checkbox" style="margin-right: 8px;">
+                        ${u.nome}
+                    </label>
+                `).join('');
+        });
     
     if (id) {
         // Carregar dados do contato
@@ -218,6 +262,11 @@ function abrirModalContato(id = null) {
 document.getElementById('form-contato').addEventListener('submit', async (e) => {
     e.preventDefault();
     const id = document.getElementById('contato-id').value;
+    
+    // Coletar IDs de usuários selecionados
+    const usuariosSelecionados = Array.from(document.querySelectorAll('.usuario-checkbox:checked'))
+        .map(cb => parseInt(cb.value));
+    
     const data = {
         acao: id ? 'editar_contato' : 'criar_contato',
         id: id || undefined,
@@ -226,7 +275,8 @@ document.getElementById('form-contato').addEventListener('submit', async (e) => 
         grupo_id: document.getElementById('contato-grupo').value || null,
         endereco: document.getElementById('contato-endereco').value,
         profissao: document.getElementById('contato-profissao').value,
-        notas: document.getElementById('contato-notas').value
+        notas: document.getElementById('contato-notas').value,
+        usuarios_ids: usuariosSelecionados
     };
     
     try {
@@ -328,20 +378,49 @@ async function enviarMensagemNPC() {
 
 async function criarNovaConversa() {
     const usuario_id = document.getElementById('select-usuario-chat').value;
-    const nome_contato = prompt('Nome do contato:');
-    if (!usuario_id || !nome_contato) return;
+    if (!usuario_id) {
+        alert('Selecione um usuário primeiro');
+        return;
+    }
     
+    // Buscar contatos do usuário
     try {
-        const res = await fetch(ADMIN_API, {
+        const res = await fetch(`${ADMIN_API}?acao=contatos_usuario&usuario_id=${usuario_id}`);
+        const data = await res.json();
+        
+        if (data.contatos.length === 0) {
+            alert('Este usuário não possui contatos. Crie contatos primeiro na aba Contatos.');
+            return;
+        }
+        
+        // Criar lista de contatos para escolha
+        let lista = 'Escolha um contato:\n\n';
+        data.contatos.forEach((c, i) => {
+            lista += `${i+1}. ${c.nome}${c.telefone ? ' (' + c.telefone + ')' : ''}\n`;
+        });
+        
+        const escolha = prompt(lista + '\nDigite o número:');
+        if (!escolha) return;
+        
+        const contatoEscolhido = data.contatos[parseInt(escolha) - 1];
+        if (!contatoEscolhido) {
+            alert('Contato inválido');
+            return;
+        }
+        
+        // Criar conversa
+        const resCriar = await fetch(ADMIN_API, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 acao: 'criar_conversa_npc',
                 usuario_id,
-                nome_contato
+                nome_contato: contatoEscolhido.nome,
+                avatar_contato: contatoEscolhido.avatar || '',
+                contato_id: contatoEscolhido.id
             })
         });
-        const result = await res.json();
+        const result = await resCriar.json();
         if (result.sucesso) {
             document.getElementById('select-usuario-chat').dispatchEvent(new Event('change'));
             document.getElementById('select-conversa-chat').value = result.id;

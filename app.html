@@ -16,68 +16,68 @@
                 <span id="status-sinal">●●●</span>
             </div>
             
-            <!-- Header do App -->
-            <div class="app-header">
-                <h1 id="app-titulo">SMARTVAMP</h1>
-                <button onclick="toggleMenu()" class="btn-menu">☰</button>
-            </div>
-            
-            <!-- Menu Lateral -->
-            <div class="menu-lateral" id="menu-lateral">
-                <div class="menu-header">
-                    <h2>Menu</h2>
-                    <button onclick="toggleMenu()" class="btn-fechar">×</button>
-                </div>
-                <div class="menu-opcoes">
-                    <div class="menu-item" onclick="abrirApp('home')">
-                        <span class="menu-icon">🏠</span> Início
-                    </div>
-                    <div class="menu-item" onclick="abrirApp('banco')">
-                        <span class="menu-icon">💰</span> Banco
-                    </div>
-                    <div class="menu-item" onclick="abrirApp('contatos')">
-                        <span class="menu-icon">👥</span> Contatos
-                    </div>
-                    <div class="menu-item" onclick="abrirApp('chat')">
-                        <span class="menu-icon">💬</span> Mensagens
-                    </div>
-                    <div class="menu-item" onclick="abrirApp('inventario')">
-                        <span class="menu-icon">🎒</span> Inventário
-                    </div>
-                    <div class="menu-item" onclick="abrirApp('noticias')">
-                        <span class="menu-icon">📰</span> Notícias
-                    </div>
-                    <div class="menu-item" onclick="abrirApp('relogio')">
-                        <span class="menu-icon">🕐</span> Relógio
-                    </div>
-                    <div class="menu-item" onclick="toggleTema()">
-                        <span class="menu-icon">🌓</span> Tema
-                    </div>
-                    <div class="menu-item" onclick="logout()">
-                        <span class="menu-icon">🔒</span> Sair
-                    </div>
-                    <div class="menu-item admin-link" id="admin-link" onclick="abrirAdmin()" style="display: none;">
-                        <span class="menu-icon">⚙️</span> Admin
-                    </div>
-                </div>
-            </div>
-            
             <!-- Conteúdo Principal -->
             <div class="app-content" id="app-content">
-                <!-- Tela Home -->
+                <!-- Tela Home com Ícones -->
                 <div id="app-home" class="app-tela active">
-                    <div class="home-widgets">
-                        <div class="widget saldo">
-                            <h3>Saldo</h3>
-                            <p class="valor-grande" id="home-saldo">R$ 0,00</p>
+                    <div class="home-grid">
+                        <div class="app-icon" onclick="abrirApp('banco')">
+                            <div class="app-icon-image banco-icon">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                    <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                                    <path d="M6 10h12M6 14h8"></path>
+                                </svg>
+                            </div>
+                            <span class="app-icon-label">Banco</span>
                         </div>
-                        <div class="widget relogio-widget">
-                            <h3>Relógio</h3>
-                            <p class="valor-grande" id="home-relogio">--:--</p>
+                        <div class="app-icon" onclick="abrirApp('contatos')">
+                            <div class="app-icon-image contatos-icon">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                            </div>
+                            <span class="app-icon-label">Contatos</span>
                         </div>
-                        <div class="widget notificacoes">
-                            <h3>Notificações</h3>
-                            <div id="home-notificacoes"></div>
+                        <div class="app-icon" onclick="abrirApp('chat')">
+                            <div class="app-icon-image chat-icon">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                </svg>
+                            </div>
+                            <span class="app-icon-label">Mensagens</span>
+                        </div>
+                        <div class="app-icon" onclick="abrirApp('inventario')">
+                            <div class="app-icon-image inventario-icon">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                                </svg>
+                            </div>
+                            <span class="app-icon-label">Inventário</span>
+                        </div>
+                        <div class="app-icon" onclick="abrirApp('noticias')">
+                            <div class="app-icon-image noticias-icon">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                                    <line x1="9" y1="8" x2="15" y2="8"></line>
+                                    <line x1="9" y1="12" x2="15" y2="12"></line>
+                                </svg>
+                            </div>
+                            <span class="app-icon-label">Notícias</span>
+                        </div>
+                        <div class="app-icon admin-link" id="admin-icon" onclick="abrirAdmin()" style="display: none;">
+                            <div class="app-icon-image admin-icon">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                    <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"></path>
+                                </svg>
+                            </div>
+                            <span class="app-icon-label">Admin</span>
                         </div>
                     </div>
                 </div>
@@ -85,23 +85,29 @@
                 <!-- Tela Banco -->
                 <div id="app-banco" class="app-tela">
                     <div class="tela-header">
-                        <h2>💰 Banco</h2>
+                        <button onclick="voltarHome()" class="btn-voltar-app">←</button>
+                        <h2>Banco</h2>
+                    </div>
+                    <div class="banco-chave-pix">
+                        <p class="label-chave">Sua Chave PIX</p>
+                        <div class="chave-pix-display">
+                            <span id="chave-pix-valor">Não configurada</span>
+                            <button onclick="editarChavePix()" class="btn-editar-chave">Editar</button>
+                        </div>
                     </div>
                     <div class="banco-saldo">
                         <p>Saldo Disponível</p>
                         <h2 id="banco-saldo-valor">R$ 0,00</h2>
                     </div>
-                    <div class="banco-opcoes">
-                        <button onclick="abrirPix('enviar')" class="btn-opcao">Enviar PIX</button>
-                        <button onclick="abrirPix('receber')" class="btn-opcao">Receber PIX</button>
-                    </div>
+                    <button onclick="abrirPix('enviar')" class="btn-enviar-pix">Enviar PIX</button>
                     <div class="transacoes-lista" id="transacoes-lista"></div>
                 </div>
                 
                 <!-- Tela Contatos -->
                 <div id="app-contatos" class="app-tela">
                     <div class="tela-header">
-                        <h2>👥 Contatos</h2>
+                        <button onclick="voltarHome()" class="btn-voltar-app">←</button>
+                        <h2>Contatos</h2>
                         <button onclick="abrirModalContato()" class="btn-add">+</button>
                     </div>
                     <div class="filtros">
@@ -114,13 +120,18 @@
                 
                 <!-- Tela Chat -->
                 <div id="app-chat" class="app-tela">
+                    <div class="tela-header">
+                        <button onclick="voltarHome()" class="btn-voltar-app">←</button>
+                        <h2>Mensagens</h2>
+                    </div>
                     <div class="chat-lista" id="chat-lista"></div>
                 </div>
                 
                 <!-- Tela Inventário -->
                 <div id="app-inventario" class="app-tela">
                     <div class="tela-header">
-                        <h2>🎒 Inventário</h2>
+                        <button onclick="voltarHome()" class="btn-voltar-app">←</button>
+                        <h2>Inventário</h2>
                         <button onclick="abrirModalItem()" class="btn-add">+</button>
                     </div>
                     <div class="inventario-lista" id="inventario-lista"></div>
@@ -129,65 +140,119 @@
                 <!-- Tela Notícias -->
                 <div id="app-noticias" class="app-tela">
                     <div class="tela-header">
-                        <h2>📰 Notícias</h2>
+                        <button onclick="voltarHome()" class="btn-voltar-app">←</button>
+                        <h2>Notícias</h2>
                     </div>
                     <div class="noticias-lista" id="noticias-lista"></div>
                 </div>
-                
-                <!-- Tela Relógio -->
-                <div id="app-relogio" class="app-tela">
-                    <div class="relogio-tela">
-                        <div class="relogio-display-grande" id="relogio-display-grande"></div>
-                        <p class="relogio-data" id="relogio-data"></p>
-                    </div>
-                </div>
+            </div>
+            
+            <!-- Botão Home na parte inferior -->
+            <div class="home-button-container" id="home-button-container" style="display: none;">
+                <button onclick="voltarHome()" class="btn-home-bottom">Início</button>
             </div>
         </div>
     </div>
     
     <!-- Modais -->
     <div id="modal-pix" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="fecharModal('modal-pix')">&times;</span>
-            <h3 id="modal-pix-titulo">Enviar PIX</h3>
+        <div class="modal-content mobile-modal">
+            <div class="modal-header">
+                <h3 id="modal-pix-titulo">Enviar PIX</h3>
+                <button onclick="fecharModal('modal-pix')" class="btn-fechar-modal">×</button>
+            </div>
             <form id="form-pix">
                 <input type="hidden" id="pix-tipo">
-                <input type="text" id="pix-chave" placeholder="Chave PIX" class="input-field">
-                <input type="text" id="pix-nome" placeholder="Nome do destinatário" class="input-field">
-                <input type="number" id="pix-valor" placeholder="Valor (R$)" class="input-field" step="0.01" min="0.01">
-                <textarea id="pix-descricao" placeholder="Descrição (opcional)" class="textarea-field"></textarea>
-                <button type="submit" class="btn-primary">Confirmar</button>
+                <div class="input-group">
+                    <label>Chave PIX</label>
+                    <input type="text" id="pix-chave" placeholder="Digite a chave PIX" class="input-field" required>
+                </div>
+                <div class="input-group">
+                    <label>Valor</label>
+                    <input type="number" id="pix-valor" placeholder="0,00" class="input-field" step="0.01" min="0.01" required>
+                </div>
+                <button type="submit" class="btn-primary">Enviar</button>
+            </form>
+        </div>
+    </div>
+    
+    <div id="modal-chave-pix" class="modal">
+        <div class="modal-content mobile-modal">
+            <div class="modal-header">
+                <h3>Editar Chave PIX</h3>
+                <button onclick="fecharModal('modal-chave-pix')" class="btn-fechar-modal">×</button>
+            </div>
+            <form id="form-chave-pix">
+                <div class="input-group">
+                    <label>Sua Chave PIX</label>
+                    <input type="text" id="nova-chave-pix" placeholder="Digite sua chave PIX" class="input-field" required>
+                </div>
+                <button type="submit" class="btn-primary">Salvar</button>
             </form>
         </div>
     </div>
     
     <div id="modal-contato" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="fecharModal('modal-contato')">&times;</span>
-            <h3 id="modal-contato-titulo">Novo Contato</h3>
+        <div class="modal-content mobile-modal">
+            <div class="modal-header">
+                <h3 id="modal-contato-titulo">Novo Contato</h3>
+                <button onclick="fecharModal('modal-contato')" class="btn-fechar-modal">×</button>
+            </div>
             <form id="form-contato">
                 <input type="hidden" id="contato-id">
-                <input type="text" id="contato-nome" placeholder="Nome" class="input-field" required>
-                <input type="text" id="contato-telefone" placeholder="Telefone" class="input-field">
-                <select id="contato-grupo" class="select-field"></select>
-                <input type="text" id="contato-endereco" placeholder="Endereço" class="input-field">
-                <input type="text" id="contato-profissao" placeholder="Profissão" class="input-field">
-                <textarea id="contato-notas" placeholder="Notas" class="textarea-field"></textarea>
+                <div class="input-group">
+                    <label>Nome</label>
+                    <input type="text" id="contato-nome" placeholder="Nome do contato" class="input-field" required>
+                </div>
+                <div class="input-group">
+                    <label>Telefone</label>
+                    <input type="text" id="contato-telefone" placeholder="(00) 00000-0000" class="input-field">
+                </div>
+                <div class="input-group">
+                    <label>Grupo</label>
+                    <select id="contato-grupo" class="select-field"></select>
+                </div>
+                <div class="input-group">
+                    <label>Endereço</label>
+                    <input type="text" id="contato-endereco" placeholder="Endereço" class="input-field">
+                </div>
+                <div class="input-group">
+                    <label>Profissão</label>
+                    <input type="text" id="contato-profissao" placeholder="Profissão" class="input-field">
+                </div>
+                <div class="input-group">
+                    <label>Notas</label>
+                    <textarea id="contato-notas" placeholder="Anotações sobre este contato" class="textarea-field"></textarea>
+                </div>
                 <button type="submit" class="btn-primary">Salvar</button>
             </form>
         </div>
     </div>
     
     <div id="modal-item" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="fecharModal('modal-item')">&times;</span>
-            <h3 id="modal-item-titulo">Novo Item</h3>
+        <div class="modal-content mobile-modal">
+            <div class="modal-header">
+                <h3 id="modal-item-titulo">Novo Item</h3>
+                <button onclick="fecharModal('modal-item')" class="btn-fechar-modal">×</button>
+            </div>
             <form id="form-item">
                 <input type="hidden" id="item-id">
-                <input type="text" id="item-nome" placeholder="Nome do item" class="input-field" required>
-                <input type="text" id="item-categoria" placeholder="Categoria (ex: Armas, Munição)" class="input-field">
-                <input type="number" id="item-quantidade" placeholder="Quantidade" class="input-field" min="1" value="1">
-                <textarea id="item-descricao" placeholder="Descrição" class="textarea-field"></textarea>
+                <div class="input-group">
+                    <label>Nome do Item</label>
+                    <input type="text" id="item-nome" placeholder="Ex: Pistola 9mm" class="input-field" required>
+                </div>
+                <div class="input-group">
+                    <label>Categoria</label>
+                    <input type="text" id="item-categoria" placeholder="Ex: Armas, Munição" class="input-field">
+                </div>
+                <div class="input-group">
+                    <label>Quantidade</label>
+                    <input type="number" id="item-quantidade" placeholder="1" class="input-field" min="1" value="1">
+                </div>
+                <div class="input-group">
+                    <label>Descrição</label>
+                    <textarea id="item-descricao" placeholder="Descrição do item" class="textarea-field"></textarea>
+                </div>
                 <button type="submit" class="btn-primary">Salvar</button>
             </form>
         </div>

@@ -59,6 +59,22 @@ if ($method === 'GET') {
         $grupos = $stmt->fetchAll();
         jsonResponse(['grupos' => $grupos]);
     }
+    
+    if ($acao === 'contatos_usuario') {
+        $usuario_id = $_GET['usuario_id'] ?? 0;
+        if ($usuario_id) {
+            $stmt = $pdo->prepare("
+                SELECT c.*, g.nome as grupo_nome 
+                FROM contatos c
+                LEFT JOIN grupos_contatos g ON c.grupo_id = g.id
+                WHERE c.usuario_id = ?
+                ORDER BY c.nome
+            ");
+            $stmt->execute([$usuario_id]);
+            $contatos = $stmt->fetchAll();
+            jsonResponse(['contatos' => $contatos]);
+        }
+    }
 }
 
 if ($method === 'POST') {
@@ -106,6 +122,22 @@ if ($method === 'POST') {
         jsonResponse(['sucesso' => true]);
     }
     
+    if ($acao === 'remover_usuario') {
+        $id = $data['id'] ?? 0;
+        
+        if ($id == $admin_id) {
+            jsonResponse(['erro' => 'Não é possível remover o próprio usuário admin'], 400);
+        }
+        
+        try {
+            $stmt = $pdo->prepare("DELETE FROM usuarios WHERE id = ?");
+            $stmt->execute([$id]);
+            jsonResponse(['sucesso' => true]);
+        } catch (Exception $e) {
+            jsonResponse(['erro' => 'Erro ao remover usuário'], 400);
+        }
+    }
+    
     if ($acao === 'adicionar_saldo') {
         $usuario_id = $data['usuario_id'] ?? 0;
         $valor = floatval($data['valor'] ?? 0);
@@ -143,18 +175,42 @@ if ($method === 'POST') {
         $endereco = $data['endereco'] ?? '';
         $profissao = $data['profissao'] ?? '';
         $notas = $data['notas'] ?? '';
+        $usuarios_ids = $data['usuarios_ids'] ?? []; // Array de IDs de usuários para criar o contato
         
         if (empty($nome)) {
             jsonResponse(['erro' => 'Nome é obrigatório'], 400);
         }
         
-        $stmt = $pdo->prepare("
-            INSERT INTO contatos (usuario_id, grupo_id, nome, telefone, endereco, profissao, notas, criado_por) 
-            VALUES (NULL, ?, ?, ?, ?, ?, ?, 'mestre')
-        ");
-        $stmt->execute([$grupo_id, $nome, $telefone, $endereco, $profissao, $notas]);
-        
-        jsonResponse(['sucesso' => true, 'id' => $pdo->lastInsertId()]);
+        // Se não especificou usuários, criar como contato global (mestre)
+        if (empty($usuarios_ids)) {
+            $stmt = $pdo->prepare("
+                INSERT INTO contatos (usuario_id, grupo_id, nome, telefone, endereco, profissao, notas, criado_por) 
+                VALUES (NULL, ?, ?, ?, ?, ?, ?, 'mestre')
+            ");
+            $stmt->execute([$grupo_id, $nome, $telefone, $endereco, $profissao, $notas]);
+            jsonResponse(['sucesso' => true, 'id' => $pdo->lastInsertId()]);
+        } else {
+            // Criar contato para cada usuário especificado
+            $ids_criados = [];
+            foreach ($usuarios_ids as $user_id) {
+                // Verificar se já existe contato com este telefone para este usuário
+                if (!empty($telefone)) {
+                    $stmt = $pdo->prepare("SELECT id FROM contatos WHERE usuario_id = ? AND telefone = ?");
+                    $stmt->execute([$user_id, $telefone]);
+                    if ($stmt->fetch()) {
+                        continue; // Já existe, pular
+                    }
+                }
+                
+                $stmt = $pdo->prepare("
+                    INSERT INTO contatos (usuario_id, grupo_id, nome, telefone, endereco, profissao, notas, criado_por) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, 'mestre')
+                ");
+                $stmt->execute([$user_id, $grupo_id, $nome, $telefone, $endereco, $profissao, $notas]);
+                $ids_criados[] = $pdo->lastInsertId();
+            }
+            jsonResponse(['sucesso' => true, 'ids' => $ids_criados]);
+        }
     }
     
     if ($acao === 'editar_contato') {

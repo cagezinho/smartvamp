@@ -44,13 +44,51 @@ if ($method === 'POST') {
             jsonResponse(['erro' => 'Nome é obrigatório'], 400);
         }
         
-        $stmt = $pdo->prepare("
-            INSERT INTO contatos (usuario_id, grupo_id, nome, telefone, avatar, endereco, profissao, notas, criado_por) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'jogador')
-        ");
-        $stmt->execute([$usuario_id, $grupo_id, $nome, $telefone, $avatar, $endereco, $profissao, $notas]);
+        // Verificar se já existe contato com este telefone (correlacionar)
+        $contato_existente = null;
+        if (!empty($telefone)) {
+            $stmt = $pdo->prepare("
+                SELECT id, nome, usuario_id, criado_por 
+                FROM contatos 
+                WHERE telefone = ? 
+                LIMIT 1
+            ");
+            $stmt->execute([$telefone]);
+            $contato_existente = $stmt->fetch();
+        }
         
-        jsonResponse(['sucesso' => true, 'id' => $pdo->lastInsertId()]);
+        // Se já existe contato com este telefone, criar apenas para este usuário (não duplicar para mestre)
+        if ($contato_existente) {
+            // Verificar se o usuário já tem este contato
+            $stmt = $pdo->prepare("
+                SELECT id FROM contatos 
+                WHERE usuario_id = ? AND telefone = ?
+            ");
+            $stmt->execute([$usuario_id, $telefone]);
+            $ja_tem = $stmt->fetch();
+            
+            if ($ja_tem) {
+                jsonResponse(['erro' => 'Você já possui este contato'], 400);
+            }
+            
+            // Criar contato para este usuário (mesmo telefone, pode ter nome diferente)
+            $stmt = $pdo->prepare("
+                INSERT INTO contatos (usuario_id, grupo_id, nome, telefone, avatar, endereco, profissao, notas, criado_por) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'jogador')
+            ");
+            $stmt->execute([$usuario_id, $grupo_id, $nome, $telefone, $avatar, $endereco, $profissao, $notas]);
+            
+            jsonResponse(['sucesso' => true, 'id' => $pdo->lastInsertId()]);
+        } else {
+            // Novo contato, criar normalmente
+            $stmt = $pdo->prepare("
+                INSERT INTO contatos (usuario_id, grupo_id, nome, telefone, avatar, endereco, profissao, notas, criado_por) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'jogador')
+            ");
+            $stmt->execute([$usuario_id, $grupo_id, $nome, $telefone, $avatar, $endereco, $profissao, $notas]);
+            
+            jsonResponse(['sucesso' => true, 'id' => $pdo->lastInsertId()]);
+        }
     }
     
     if ($acao === 'editar') {

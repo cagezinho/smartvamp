@@ -6,8 +6,8 @@ $method = $_SERVER['REQUEST_METHOD'];
 $pdo = getDB();
 
 if ($method === 'GET') {
-    // Buscar saldo e transações
-    $stmt = $pdo->prepare("SELECT saldo FROM usuarios WHERE id = ?");
+    // Buscar saldo, chave PIX e transações
+    $stmt = $pdo->prepare("SELECT saldo, chave_pix FROM usuarios WHERE id = ?");
     $stmt->execute([$usuario_id]);
     $usuario = $stmt->fetch();
     
@@ -22,7 +22,8 @@ if ($method === 'GET') {
     $transacoes = $stmt->fetchAll();
     
     jsonResponse([
-        'saldo' => floatval($usuario['saldo']),
+        'saldo' => floatval($usuario['saldo'] ?? 0),
+        'chave_pix' => $usuario['chave_pix'] ?? null,
         'transacoes' => $transacoes
     ]);
 }
@@ -65,12 +66,23 @@ if ($method === 'POST') {
             $stmt = $pdo->prepare("UPDATE usuarios SET saldo = ? WHERE id = ?");
             $stmt->execute([$novo_saldo, $usuario_id]);
             
+            // Buscar nome do destinatário pela chave PIX (se for chave de outro usuário)
+            $nome_destinatario = '';
+            if (!empty($chave)) {
+                $stmt = $pdo->prepare("SELECT nome FROM usuarios WHERE chave_pix = ? LIMIT 1");
+                $stmt->execute([$chave]);
+                $destinatario = $stmt->fetch();
+                if ($destinatario) {
+                    $nome_destinatario = $destinatario['nome'];
+                }
+            }
+            
             // Registrar transação
             $stmt = $pdo->prepare("
                 INSERT INTO transacoes (usuario_id, tipo, valor, descricao, pix_chave, pix_nome) 
                 VALUES (?, ?, ?, ?, ?, ?)
             ");
-            $stmt->execute([$usuario_id, $tipo_transacao, $valor, $descricao, $chave, $nome]);
+            $stmt->execute([$usuario_id, $tipo_transacao, $valor, $descricao, $chave, $nome_destinatario]);
             
             $pdo->commit();
             
@@ -82,6 +94,19 @@ if ($method === 'POST') {
         } catch (Exception $e) {
             $pdo->rollBack();
             jsonResponse(['erro' => $e->getMessage()], 400);
+        }
+    }
+    
+    if ($acao === 'salvar_chave_pix') {
+        $chave_pix = $data['chave_pix'] ?? '';
+        
+        try {
+            $stmt = $pdo->prepare("UPDATE usuarios SET chave_pix = ? WHERE id = ?");
+            $stmt->execute([$chave_pix, $usuario_id]);
+            
+            jsonResponse(['sucesso' => true, 'mensagem' => 'Chave PIX salva com sucesso']);
+        } catch (Exception $e) {
+            jsonResponse(['erro' => 'Erro ao salvar chave PIX'], 400);
         }
     }
 }
