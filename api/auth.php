@@ -5,6 +5,16 @@ ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
 header('Content-Type: application/json; charset=utf-8');
+// Permitir CORS se necessário
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+
+// Responder a requisições OPTIONS (preflight)
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
 
 // Carregar config
 $config_path = __DIR__ . '/../config.php';

@@ -1,5 +1,14 @@
-// Caminho da API - ajuste conforme necessário
-const API_BASE = 'api/';
+// Caminho da API - detecta automaticamente
+const API_BASE = (() => {
+    const path = window.location.pathname;
+    // Se estiver em uma subpasta (ex: /vampire/), usar caminho relativo
+    if (path.includes('/vampire/') || path.includes('/smartvamp/')) {
+        const basePath = path.substring(0, path.lastIndexOf('/') + 1);
+        return basePath + 'api/';
+    }
+    return 'api/';
+})();
+console.log('API_BASE configurado como:', API_BASE);
 let usuario = null;
 let conversaAtual = null;
 let intervalos = [];
@@ -55,23 +64,40 @@ async function fazerLogin() {
     erroDiv.textContent = '';
     
     try {
-        const res = await fetch(`${API_BASE}auth.php`, {
+        const url = `${API_BASE}auth.php`;
+        console.log('Tentando fazer login em:', url);
+        console.log('Senha enviada:', senha);
+        
+        const res = await fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ acao: 'login', senha })
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ acao: 'login', senha }),
+            credentials: 'same-origin'
         });
         
+        console.log('Status da resposta:', res.status);
+        console.log('Headers da resposta:', res.headers);
+        
         if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
+            const errorText = await res.text();
+            console.error('Erro HTTP:', res.status, errorText);
+            erroDiv.textContent = `Erro ${res.status}: ${errorText || 'Erro desconhecido'}`;
+            btnEnviar.disabled = false;
+            btnEnviar.style.opacity = '1';
+            return;
         }
         
         let data;
         try {
-            data = await res.json();
-        } catch (e) {
             const text = await res.text();
-            console.error('Resposta não é JSON:', text);
-            erroDiv.textContent = 'Erro no servidor. Verifique o console (F12)';
+            console.log('Resposta bruta:', text);
+            data = JSON.parse(text);
+        } catch (e) {
+            console.error('Erro ao parsear JSON:', e);
+            erroDiv.textContent = 'Erro no formato da resposta do servidor. Verifique o console (F12)';
             btnEnviar.disabled = false;
             btnEnviar.style.opacity = '1';
             return;
@@ -94,13 +120,15 @@ async function fazerLogin() {
         }
     } catch (error) {
         console.error('Erro de conexão:', error);
-        erroDiv.textContent = 'Erro de conexão. Verifique: 1) Se o servidor está online 2) Se a pasta api/ existe 3) Se o config.php está configurado';
+        console.error('Stack trace:', error.stack);
+        erroDiv.textContent = `Erro de conexão: ${error.message}. Verifique o console (F12) para mais detalhes`;
         btnEnviar.disabled = false;
         btnEnviar.style.opacity = '1';
         
         // Mostrar detalhes do erro no console para debug
         console.log('URL tentada:', `${API_BASE}auth.php`);
         console.log('Caminho atual:', window.location.pathname);
+        console.log('URL completa seria:', new URL(`${API_BASE}auth.php`, window.location.href).href);
     }
 }
 

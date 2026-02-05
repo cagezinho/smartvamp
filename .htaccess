@@ -18,6 +18,9 @@ php_value session.cookie_lifetime 86400
     Header set X-Content-Type-Options "nosniff"
     Header set X-Frame-Options "SAMEORIGIN"
     Header set X-XSS-Protection "1; mode=block"
+    # Permitir requisições POST de qualquer origem (ajuste conforme necessário)
+    Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Accept"
 </IfModule>
 
 # Compressão GZIP
